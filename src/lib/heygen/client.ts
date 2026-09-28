@@ -18,8 +18,9 @@ export type PublicAvatar = {
 };
 
 export async function listPublicAvatars(limit = 12): Promise<PublicAvatar[]> {
+  const fetchLimit = Math.min(Math.max(limit * 2, 24), 50);
   const res = await fetch(
-    `${BASE_URL}/v3/avatars/looks?ownership=public&avatar_type=studio_avatar&limit=${Math.max(limit * 2, 24)}`,
+    `${BASE_URL}/v3/avatars/looks?ownership=public&avatar_type=studio_avatar&limit=${fetchLimit}`,
     { headers: headers(), cache: "no-store" },
   );
   if (!res.ok) {
@@ -31,6 +32,21 @@ export async function listPublicAvatars(limit = 12): Promise<PublicAvatar[]> {
   const female = avatars.filter((a) => a.gender === "female");
   const others = avatars.filter((a) => a.gender !== "female");
   return [...female, ...others].slice(0, limit);
+}
+
+export async function getDefaultVoiceId(
+  gender: "male" | "female",
+): Promise<string | null> {
+  const res = await fetch(
+    `${BASE_URL}/v3/avatars/looks?ownership=public&avatar_type=studio_avatar&limit=50`,
+    { headers: headers(), cache: "no-store" },
+  );
+  if (!res.ok) return null;
+  const json = await res.json();
+  const match = (json.data as PublicAvatar[]).find(
+    (a) => a.gender === gender && a.default_voice_id,
+  );
+  return match?.default_voice_id ?? null;
 }
 
 export async function createAvatarVideo(input: {
@@ -168,6 +184,31 @@ export async function getAvatarLookStatus(lookId: string): Promise<{
   return {
     status: json.data.status,
     errorMessage: json.data.error?.message ?? null,
+  };
+}
+
+export async function createPromptAvatar(input: {
+  name: string;
+  prompt: string;
+}): Promise<{ groupId: string; lookId: string }> {
+  const res = await fetch(`${BASE_URL}/v3/avatars`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      type: "prompt",
+      name: input.name,
+      prompt: input.prompt,
+      aspect_ratio: "9:16",
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HeyGen avatar generation failed (${res.status}): ${text}`);
+  }
+  const json = await res.json();
+  return {
+    groupId: json.data.avatar_group.id as string,
+    lookId: json.data.avatar_item.id as string,
   };
 }
 

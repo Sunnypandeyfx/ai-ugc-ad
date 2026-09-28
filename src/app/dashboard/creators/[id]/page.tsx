@@ -21,7 +21,7 @@ export default async function CreatorPage({
 
   const { data: avatar } = await supabase
     .from("custom_avatars")
-    .select("id, name, training_status, consent_status, consent_url, error")
+    .select("id, name, source, training_status, consent_status, consent_url, error")
     .eq("id", id)
     .single();
 
@@ -37,6 +37,7 @@ export default async function CreatorPage({
 
       <CreatorStatusPanel
         customAvatarId={avatar.id}
+        source={avatar.source as "digital_twin" | "prompt"}
         initialTrainingStatus={
           avatar.training_status as "uploading" | "training" | "ready" | "failed"
         }

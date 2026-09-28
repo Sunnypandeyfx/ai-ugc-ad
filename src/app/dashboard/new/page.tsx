@@ -7,17 +7,21 @@ import {
   getAvatarLookPreview,
   type PublicAvatar,
 } from "@/lib/heygen/client";
-import NewGenerationForm from "./NewGenerationForm";
+import NewGenerationForm, { type PickerAvatar } from "./NewGenerationForm";
 
 export const metadata: Metadata = {
   title: "New ad",
   alternates: { canonical: "/dashboard/new" },
 };
 
-async function getStockAvatars(): Promise<PublicAvatar[]> {
+async function getStockAvatars(): Promise<PickerAvatar[]> {
   if (!process.env.HEYGEN_API_KEY) return [];
   try {
-    return await listPublicAvatars(11);
+    const avatars = await listPublicAvatars(30);
+    return avatars.map((a: PublicAvatar) => ({
+      ...a,
+      category: a.gender === "male" ? "male" : "female",
+    }));
   } catch {
     return [];
   }
@@ -25,7 +29,7 @@ async function getStockAvatars(): Promise<PublicAvatar[]> {
 
 async function getMyCreators(
   supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<PublicAvatar[]> {
+): Promise<PickerAvatar[]> {
   const { data } = await supabase
     .from("custom_avatars")
     .select("heygen_look_id, name, voice_id")
@@ -43,6 +47,7 @@ async function getMyCreators(
         gender: null,
         preview_image_url: previewImageUrl,
         default_voice_id: a.voice_id,
+        category: "custom" as const,
       };
     }),
   );
@@ -75,7 +80,7 @@ export default async function NewGenerationPage() {
       <p className="mt-6 text-xs text-fg-subtle">
         Don&rsquo;t see who you want?{" "}
         <Link href="/dashboard/creators/new" className="text-fg underline underline-offset-4">
-          Train your own creator
+          Add a custom or AI-generated creator
         </Link>
       </p>
     </div>

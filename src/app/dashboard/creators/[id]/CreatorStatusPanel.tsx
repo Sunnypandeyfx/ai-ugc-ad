@@ -8,12 +8,14 @@ type ConsentStatus = "not_started" | "pending" | "approved" | "declined";
 
 export default function CreatorStatusPanel({
   customAvatarId,
+  source,
   initialTrainingStatus,
   initialConsentStatus,
   initialConsentUrl,
   initialError,
 }: {
   customAvatarId: string;
+  source: "digital_twin" | "prompt";
   initialTrainingStatus: TrainingStatus;
   initialConsentStatus: ConsentStatus;
   initialConsentUrl: string | null;
@@ -72,7 +74,13 @@ export default function CreatorStatusPanel({
         </p>
       )}
 
-      {trainingStatus === "ready" && (
+      {trainingStatus === "ready" && source === "prompt" && (
+        <p className="mt-2 text-sm text-fg-muted">
+          Ready — this AI-generated character is ready to use on new ads.
+        </p>
+      )}
+
+      {trainingStatus === "ready" && source === "digital_twin" && (
         <>
           <p className="mt-2 text-sm text-fg-muted">Training complete.</p>
 

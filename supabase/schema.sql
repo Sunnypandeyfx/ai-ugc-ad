@@ -147,6 +147,8 @@ create table if not exists public.custom_avatars (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   name text not null,
+  source text not null default 'digital_twin'
+    check (source in ('digital_twin', 'prompt')),
   heygen_group_id text,
   heygen_look_id text,
   voice_id text,

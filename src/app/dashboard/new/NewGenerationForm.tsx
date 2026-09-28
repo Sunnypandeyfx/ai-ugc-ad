@@ -6,7 +6,18 @@ import type { PublicAvatar } from "@/lib/heygen/client";
 import { createClient } from "@/lib/supabase/client";
 import { createGeneration, type CreateGenerationState } from "./actions";
 
+export type PickerAvatar = PublicAvatar & {
+  category: "female" | "male" | "custom";
+};
+
 const initialState: CreateGenerationState = { error: null };
+
+const FILTERS: { key: "all" | "female" | "male" | "custom"; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "female", label: "Female" },
+  { key: "male", label: "Male" },
+  { key: "custom", label: "My creators" },
+];
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
@@ -25,14 +36,21 @@ export default function NewGenerationForm({
   avatars,
   userId,
 }: {
-  avatars: PublicAvatar[];
+  avatars: PickerAvatar[];
   userId: string;
 }) {
   const [state, formAction] = useActionState(createGeneration, initialState);
   const [adType, setAdType] = useState<"ugc" | "cinematic">("ugc");
-  const [selectedAvatar, setSelectedAvatar] = useState<PublicAvatar | null>(
+  const [selectedAvatar, setSelectedAvatar] = useState<PickerAvatar | null>(
     avatars[0] ?? null,
   );
+  const [avatarFilter, setAvatarFilter] = useState<
+    "all" | "female" | "male" | "custom"
+  >("all");
+  const visibleAvatars =
+    avatarFilter === "all"
+      ? avatars
+      : avatars.filter((a) => a.category === avatarFilter);
   type PendingImage = {
     id: string;
     previewUrl: string;
@@ -248,28 +266,69 @@ export default function NewGenerationForm({
               yet. You can still generate a script.
             </p>
           ) : (
-            <div className="mt-2 grid grid-cols-4 gap-2">
-              {avatars.map((avatar) => (
-                <button
-                  key={avatar.id}
-                  type="button"
-                  onClick={() => setSelectedAvatar(avatar)}
-                  className={`overflow-hidden rounded-lg border-2 transition-colors ${
-                    selectedAvatar?.id === avatar.id
-                      ? "border-accent"
-                      : "border-transparent"
-                  }`}
-                  title={avatar.name}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={avatar.preview_image_url ?? ""}
-                    alt={avatar.name}
-                    className="aspect-square w-full object-cover"
-                  />
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="mt-2 flex gap-1.5">
+                {FILTERS.map((f) => (
+                  <button
+                    key={f.key}
+                    type="button"
+                    onClick={() => setAvatarFilter(f.key)}
+                    className={`rounded-full px-3 py-1 text-xs transition-colors ${
+                      avatarFilter === f.key
+                        ? "bg-accent text-accent-fg"
+                        : "border border-border-strong text-fg-muted hover:text-fg"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {visibleAvatars.length === 0 ? (
+                <p className="mt-3 text-xs text-fg-subtle">
+                  No creators in this category yet.
+                </p>
+              ) : (
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  {visibleAvatars.map((avatar) => {
+                    const isSelected = selectedAvatar?.id === avatar.id;
+                    return (
+                      <button
+                        key={avatar.id}
+                        type="button"
+                        onClick={() => setSelectedAvatar(avatar)}
+                        className={`relative overflow-hidden rounded-lg border-2 transition-all ${
+                          isSelected
+                            ? "border-blue-500 ring-2 ring-blue-500 ring-offset-2 ring-offset-bg"
+                            : "border-transparent opacity-80 hover:opacity-100"
+                        }`}
+                        title={avatar.name}
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={avatar.preview_image_url ?? ""}
+                          alt={avatar.name}
+                          className="aspect-square w-full object-cover"
+                        />
+                        {isSelected && (
+                          <span className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-white">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M5 12.5 10 17l9-10"
+                                stroke="currentColor"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
           <input type="hidden" name="avatarId" value={selectedAvatar?.id ?? ""} />
           <input

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import AuthForm from "@/components/AuthForm";
 
 export const metadata: Metadata = {
@@ -15,7 +16,9 @@ export default function SignupPage() {
         <h1 className="mb-8 text-center font-display text-3xl tracking-tight">
           Start creating for free
         </h1>
-        <AuthForm mode="signup" />
+        <Suspense fallback={null}>
+          <AuthForm mode="signup" />
+        </Suspense>
       </div>
     </div>
   );

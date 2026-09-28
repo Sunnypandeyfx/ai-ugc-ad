@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import { siteConfig } from "@/lib/seo";
 
 const NAV_LINKS = [
@@ -12,8 +14,16 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-export default function Header() {
+export default function Header({ userEmail }: { userEmail: string | null }) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/");
+    router.refresh();
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b border-border/80 bg-bg/80 backdrop-blur-md">
@@ -40,18 +50,38 @@ export default function Header() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/login"
-            className="text-sm text-fg-muted transition-colors hover:text-fg"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/signup"
-            className="rounded-full bg-fg px-4 py-2 text-sm font-medium text-bg transition-colors hover:bg-white"
-          >
-            Start free
-          </Link>
+          {userEmail ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="text-sm text-fg-muted transition-colors hover:text-fg"
+              >
+                Dashboard
+              </Link>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="rounded-full border border-border-strong px-4 py-2 text-sm font-medium text-fg transition-colors hover:bg-surface"
+              >
+                Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="text-sm text-fg-muted transition-colors hover:text-fg"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-full bg-fg px-4 py-2 text-sm font-medium text-bg transition-colors hover:bg-white"
+              >
+                Start free
+              </Link>
+            </>
+          )}
         </div>
 
         <button
@@ -86,15 +116,32 @@ export default function Header() {
               </a>
             ))}
             <div className="mt-2 flex flex-col gap-3 border-t border-border pt-4">
-              <Link href="/login" className="text-sm text-fg-muted hover:text-fg">
-                Log in
-              </Link>
-              <Link
-                href="/signup"
-                className="rounded-full bg-fg px-4 py-2 text-center text-sm font-medium text-bg"
-              >
-                Start free
-              </Link>
+              {userEmail ? (
+                <>
+                  <Link href="/dashboard" className="text-sm text-fg-muted hover:text-fg">
+                    Dashboard
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="rounded-full border border-border-strong px-4 py-2 text-center text-sm font-medium text-fg"
+                  >
+                    Log out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link href="/login" className="text-sm text-fg-muted hover:text-fg">
+                    Log in
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="rounded-full bg-fg px-4 py-2 text-center text-sm font-medium text-bg"
+                  >
+                    Start free
+                  </Link>
+                </>
+              )}
             </div>
           </nav>
         </div>

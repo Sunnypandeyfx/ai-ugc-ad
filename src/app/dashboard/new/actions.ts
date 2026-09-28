@@ -25,6 +25,9 @@ export async function createGeneration(
   const tone = String(formData.get("tone") || "").trim();
   const adType = String(formData.get("adType") || "ugc") as "ugc" | "cinematic";
   const image = formData.get("image") as File | null;
+  const avatarId = String(formData.get("avatarId") || "").trim();
+  const avatarName = String(formData.get("avatarName") || "").trim();
+  const voiceId = String(formData.get("voiceId") || "").trim();
 
   if (!name || !description || !audience) {
     return { error: "Product name, description, and audience are required." };
@@ -61,6 +64,9 @@ export async function createGeneration(
       tone: tone || null,
       platform,
       status: "queued",
+      avatar_id: adType === "ugc" && avatarId ? avatarId : null,
+      avatar_name: adType === "ugc" && avatarName ? avatarName : null,
+      voice_id: adType === "ugc" && voiceId ? voiceId : null,
     })
     .select("id")
     .single();

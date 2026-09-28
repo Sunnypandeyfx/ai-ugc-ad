@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { AdScript } from "@/lib/ai/generateScript";
+import VideoPanel from "./VideoPanel";
 
 export const metadata: Metadata = { title: "Ad script" };
 
@@ -21,7 +22,9 @@ export default async function GenerationPage({
 
   const { data: generation } = await supabase
     .from("generations")
-    .select("id, ad_type, platform, audience, tone, status, script, error, products(name, description)")
+    .select(
+      "id, ad_type, platform, audience, tone, status, script, error, avatar_id, avatar_name, voice_id, video_status, video_url, video_error, products(name, description)",
+    )
     .eq("id", id)
     .single();
 
@@ -122,11 +125,21 @@ export default async function GenerationPage({
             <p className="mt-2 text-sm font-medium">{script.cta}</p>
           </div>
 
-          <div className="rounded-xl border border-dashed border-border-strong p-5 text-sm text-fg-subtle">
-            Video rendering isn&rsquo;t wired up yet — this script is the
-            first step. Next we connect a video/UGC generation provider to
-            turn it into an actual ad.
-          </div>
+          {generation.ad_type === "ugc" ? (
+            <VideoPanel
+              generationId={generation.id}
+              canRender
+              initialStatus={generation.video_status as "not_started" | "rendering" | "ready" | "failed"}
+              initialUrl={generation.video_url}
+              initialError={generation.video_error}
+              avatarName={generation.avatar_name}
+            />
+          ) : (
+            <div className="rounded-xl border border-dashed border-border-strong p-5 text-sm text-fg-subtle">
+              Cinematic video rendering isn&rsquo;t connected yet — only UGC
+              creator videos can be rendered right now.
+            </div>
+          )}
         </div>
       )}
     </div>

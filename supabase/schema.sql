@@ -66,6 +66,14 @@ create table if not exists public.generations (
     check (status in ('queued', 'script_ready', 'failed')),
   script jsonb,
   error text,
+  avatar_id text,
+  avatar_name text,
+  voice_id text,
+  heygen_video_id text,
+  video_status text not null default 'not_started'
+    check (video_status in ('not_started', 'rendering', 'ready', 'failed')),
+  video_url text,
+  video_error text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );

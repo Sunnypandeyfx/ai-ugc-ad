@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import type { PublicAvatar } from "@/lib/heygen/client";
 import { createGeneration, type CreateGenerationState } from "./actions";
 
 const initialState: CreateGenerationState = { error: null };
@@ -19,8 +20,16 @@ function SubmitButton() {
   );
 }
 
-export default function NewGenerationForm() {
+export default function NewGenerationForm({
+  avatars,
+}: {
+  avatars: PublicAvatar[];
+}) {
   const [state, formAction] = useActionState(createGeneration, initialState);
+  const [adType, setAdType] = useState<"ugc" | "cinematic">("ugc");
+  const [selectedAvatar, setSelectedAvatar] = useState<PublicAvatar | null>(
+    avatars[0] ?? null,
+  );
 
   return (
     <form action={formAction} className="mt-10 space-y-5">
@@ -102,7 +111,8 @@ export default function NewGenerationForm() {
           <select
             id="adType"
             name="adType"
-            defaultValue="ugc"
+            value={adType}
+            onChange={(e) => setAdType(e.target.value as "ugc" | "cinematic")}
             className="mt-1.5 w-full rounded-lg border border-border-strong bg-surface px-3 py-2.5 text-sm outline-none focus:border-accent"
           >
             <option value="ugc">UGC creator</option>
@@ -122,6 +132,51 @@ export default function NewGenerationForm() {
           placeholder="Playful and confident"
         />
       </div>
+
+      {adType === "ugc" && (
+        <div>
+          <p className="text-xs text-fg-muted">Choose a creator</p>
+          {avatars.length === 0 ? (
+            <p className="mt-2 text-xs text-fg-subtle">
+              No creators available — video rendering isn&rsquo;t configured
+              yet. You can still generate a script.
+            </p>
+          ) : (
+            <div className="mt-2 grid grid-cols-4 gap-2">
+              {avatars.map((avatar) => (
+                <button
+                  key={avatar.id}
+                  type="button"
+                  onClick={() => setSelectedAvatar(avatar)}
+                  className={`overflow-hidden rounded-lg border-2 transition-colors ${
+                    selectedAvatar?.id === avatar.id
+                      ? "border-accent"
+                      : "border-transparent"
+                  }`}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={avatar.preview_image_url ?? ""}
+                    alt={avatar.name}
+                    className="aspect-square w-full object-cover"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+          <input type="hidden" name="avatarId" value={selectedAvatar?.id ?? ""} />
+          <input
+            type="hidden"
+            name="avatarName"
+            value={selectedAvatar?.name ?? ""}
+          />
+          <input
+            type="hidden"
+            name="voiceId"
+            value={selectedAvatar?.default_voice_id ?? ""}
+          />
+        </div>
+      )}
 
       {state.error && <p className="text-xs text-red-400">{state.error}</p>}
 

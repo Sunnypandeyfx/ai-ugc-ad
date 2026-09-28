@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
+import Link from "next/link";
 import type { PublicAvatar } from "@/lib/heygen/client";
 import { createClient } from "@/lib/supabase/client";
 import { createGeneration, type CreateGenerationState } from "./actions";
@@ -18,6 +19,28 @@ const FILTERS: { key: "all" | "female" | "male" | "custom"; label: string }[] = 
   { key: "male", label: "Male" },
   { key: "custom", label: "My creators" },
 ];
+
+function AddCreatorTile() {
+  return (
+    <Link
+      href="/dashboard/creators/new"
+      className="flex aspect-square flex-col items-center justify-center gap-1 rounded-lg border-2 border-dashed border-blue-500/60 text-blue-500 transition-colors hover:border-blue-500 hover:bg-blue-500/10"
+      title="Upload or generate a creator"
+    >
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+        <path
+          d="M12 5v14M5 12h14"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+      </svg>
+      <span className="text-center text-[10px] leading-tight">
+        Upload your own
+      </span>
+    </Link>
+  );
+}
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
@@ -285,9 +308,9 @@ export default function NewGenerationForm({
               </div>
 
               {visibleAvatars.length === 0 ? (
-                <p className="mt-3 text-xs text-fg-subtle">
-                  No creators in this category yet.
-                </p>
+                <div className="mt-3 grid grid-cols-4 gap-2">
+                  <AddCreatorTile />
+                </div>
               ) : (
                 <div className="mt-3 grid grid-cols-4 gap-2">
                   {visibleAvatars.map((avatar) => {
@@ -326,6 +349,7 @@ export default function NewGenerationForm({
                       </button>
                     );
                   })}
+                  {avatarFilter === "custom" && <AddCreatorTile />}
                 </div>
               )}
             </>

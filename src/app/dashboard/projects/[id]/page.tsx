@@ -4,8 +4,13 @@ import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { STEPS, stepIndex, statusLabel, type StepKey } from "@/lib/projects";
 import ProjectSettingsForm from "./ProjectSettingsForm";
+import ProductStep from "./_product/ProductStep";
+import BriefStep from "./_brief/BriefStep";
 
 export const metadata: Metadata = { title: "Project" };
+
+// Product analysis sends several photos to Claude from a server action.
+export const maxDuration = 60;
 
 export default async function ProjectWorkspacePage({
   params,
@@ -26,7 +31,7 @@ export default async function ProjectWorkspacePage({
   // Read through the user's session so RLS proves ownership.
   const { data: project } = await supabase
     .from("projects")
-    .select("id, title, status, current_step, aspect_ratio, created_at, updated_at")
+    .select("id, title, status, current_step, aspect_ratio, product_id, created_at, updated_at")
     .eq("id", id)
     .single();
 
@@ -54,7 +59,7 @@ export default async function ProjectWorkspacePage({
         </span>
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[220px_1fr_280px]">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[220px_minmax(0,1fr)_280px]">
         <nav aria-label="Project steps" className="lg:sticky lg:top-24 lg:self-start">
           <ol className="flex gap-2 overflow-x-auto pb-2 lg:flex-col lg:overflow-visible lg:pb-0">
             {STEPS.map((step, i) => {
@@ -109,7 +114,17 @@ export default async function ProjectWorkspacePage({
           </p>
           <h2 className="mt-2 font-display text-2xl tracking-tight">{viewStep.label}</h2>
           <p className="mt-2 max-w-lg text-sm text-fg-muted">{viewStep.blurb}</p>
-          <StepBody step={viewStep.key} />
+          {viewStep.key === "product" ? (
+            <ProductStep projectId={project.id} productId={project.product_id} userId={user.id} />
+          ) : viewStep.key === "brief" ? (
+            <BriefStep
+              projectId={project.id}
+              productId={project.product_id}
+              aspectRatio={project.aspect_ratio}
+            />
+          ) : (
+            <StepBody step={viewStep.key} />
+          )}
         </section>
 
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
@@ -134,14 +149,13 @@ export default async function ProjectWorkspacePage({
 }
 
 function StepBody({ step }: { step: StepKey }) {
-  // Only the workflow shell exists so far; each step's tools land in the
-  // following milestones. Say so plainly instead of showing mock UI.
+  // Steps not built yet say so plainly instead of showing mock UI.
   return (
     <div className="mt-8 rounded-xl border border-dashed border-border-strong p-6">
       <p className="text-sm text-fg">Not available yet</p>
       <p className="mt-1 text-sm text-fg-muted">
-        {step === "product"
-          ? "Product upload and AI product analysis arrive in the next update. Your project is saved and will pick up right here."
+        {step === "concept"
+          ? "Your product and brief are saved. Three distinct ad concepts, written only from your confirmed facts, arrive in the next update."
           : "This step unlocks once the earlier steps are built and completed."}
       </p>
     </div>

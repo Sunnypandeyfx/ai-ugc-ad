@@ -20,6 +20,12 @@ export default async function GenerationPage({
 
   if (!user) redirect(`/login?next=/dashboard/${id}`);
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("credits_remaining")
+    .eq("id", user.id)
+    .single();
+
   const { data: generation } = await supabase
     .from("generations")
     .select(
@@ -133,6 +139,7 @@ export default async function GenerationPage({
               initialUrl={generation.video_url}
               initialError={generation.video_error}
               avatarName={generation.avatar_name}
+              creditsRemaining={profile?.credits_remaining ?? null}
             />
           ) : (
             <div className="rounded-xl border border-dashed border-border-strong p-5 text-sm text-fg-subtle">

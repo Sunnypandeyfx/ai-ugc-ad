@@ -5,13 +5,15 @@ import { createClient } from "@/lib/supabase/server";
 import { createAvatarVideo, scriptToNarration } from "@/lib/heygen/client";
 import type { AdScript } from "@/lib/ai/generateScript";
 
-export async function renderVideo(generationId: string) {
+export type RenderVideoResult = { error: string | null };
+
+export async function renderVideo(generationId: string): Promise<RenderVideoResult> {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (!user) throw new Error("Not signed in.");
+  if (!user) return { error: "Not signed in." };
 
   const { data: generation, error } = await supabase
     .from("generations")
@@ -19,12 +21,24 @@ export async function renderVideo(generationId: string) {
     .eq("id", generationId)
     .single();
 
-  if (error || !generation) throw new Error("Ad not found.");
+  if (error || !generation) return { error: "Ad not found." };
   if (generation.status !== "script_ready") {
-    throw new Error("Script isn't ready yet.");
+    return { error: "Script isn't ready yet." };
   }
   if (!generation.avatar_id || !generation.voice_id) {
-    throw new Error("No creator was selected for this ad.");
+    return { error: "No creator was selected for this ad." };
+  }
+
+  const { data: remainingCredits, error: creditError } =
+    await supabase.rpc("consume_credit");
+
+  if (creditError) {
+    return { error: `Could not check credits: ${creditError.message}` };
+  }
+  if (remainingCredits === -1) {
+    return {
+      error: "You're out of free credits. Upgrade your plan to keep rendering.",
+    };
   }
 
   await supabase
@@ -56,4 +70,5 @@ export async function renderVideo(generationId: string) {
   }
 
   revalidatePath(`/dashboard/${generationId}`);
+  return { error: null };
 }

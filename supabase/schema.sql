@@ -5,6 +5,7 @@ create table if not exists public.profiles (
   id uuid primary key references auth.users (id) on delete cascade,
   email text not null,
   full_name text,
+  credits_remaining integer not null default 3,
   created_at timestamptz not null default now()
 );
 
@@ -35,6 +36,34 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
+
+-- Atomically consumes one credit for the calling user (auth.uid()).
+-- Returns remaining credits on success, or -1 if none were left.
+create or replace function public.consume_credit()
+returns integer
+language plpgsql
+security definer set search_path = public
+as $$
+declare
+  remaining integer;
+begin
+  insert into public.profiles (id, email)
+  select auth.uid(), (select email from auth.users where id = auth.uid())
+  on conflict (id) do nothing;
+
+  update public.profiles
+  set credits_remaining = credits_remaining - 1
+  where id = auth.uid() and credits_remaining > 0
+  returning credits_remaining into remaining;
+
+  if remaining is null then
+    return -1;
+  end if;
+  return remaining;
+end;
+$$;
+
+grant execute on function public.consume_credit() to authenticated;
 
 -- Products -----------------------------------------------------------------
 create table if not exists public.products (

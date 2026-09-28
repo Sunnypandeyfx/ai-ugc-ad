@@ -22,6 +22,12 @@ export default async function DashboardPage() {
 
   if (!user) redirect("/login?next=/dashboard");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("credits_remaining")
+    .eq("id", user.id)
+    .single();
+
   const { data: generations } = await supabase
     .from("generations")
     .select("id, ad_type, platform, status, created_at, products(name)")
@@ -34,12 +40,20 @@ export default async function DashboardPage() {
           <h1 className="font-display text-3xl tracking-tight">Your ads</h1>
           <p className="mt-1 text-sm text-fg-muted">{user.email}</p>
         </div>
-        <Link
-          href="/dashboard/new"
-          className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-fg transition-transform hover:scale-[1.02]"
-        >
-          New ad
-        </Link>
+        <div className="flex flex-col items-end gap-2">
+          <Link
+            href="/dashboard/new"
+            className="rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-fg transition-transform hover:scale-[1.02]"
+          >
+            New ad
+          </Link>
+          {profile && (
+            <span className="text-xs text-fg-subtle">
+              {profile.credits_remaining} free render
+              {profile.credits_remaining === 1 ? "" : "s"} left
+            </span>
+          )}
+        </div>
       </div>
 
       {!generations || generations.length === 0 ? (

@@ -12,6 +12,7 @@ export default function VideoPanel({
   initialUrl,
   initialError,
   avatarName,
+  creditsRemaining,
 }: {
   generationId: string;
   canRender: boolean;
@@ -19,6 +20,7 @@ export default function VideoPanel({
   initialUrl: string | null;
   initialError: string | null;
   avatarName: string | null;
+  creditsRemaining: number | null;
 }) {
   const [status, setStatus] = useState<VideoStatus>(initialStatus);
   const [videoUrl, setVideoUrl] = useState(initialUrl);
@@ -49,10 +51,15 @@ export default function VideoPanel({
   }, [status, generationId]);
 
   function handleRender() {
-    setStatus("rendering");
     setVideoError(null);
     startTransition(async () => {
-      await renderVideo(generationId);
+      const result = await renderVideo(generationId);
+      if (result.error) {
+        setStatus("failed");
+        setVideoError(result.error);
+      } else {
+        setStatus("rendering");
+      }
     });
   }
 
@@ -67,13 +74,20 @@ export default function VideoPanel({
           <p className="mt-2 text-sm text-fg-muted">
             {avatarName ? `Creator: ${avatarName}` : "Ready to render."}
           </p>
+          {creditsRemaining !== null && (
+            <p className="mt-1 text-xs text-fg-subtle">
+              {creditsRemaining > 0
+                ? `${creditsRemaining} free render${creditsRemaining === 1 ? "" : "s"} left`
+                : "No free renders left — upgrade to keep rendering"}
+            </p>
+          )}
           <button
             type="button"
             onClick={handleRender}
             disabled={isPending}
             className="mt-4 rounded-full bg-accent px-5 py-2.5 text-sm font-medium text-accent-fg transition-transform hover:scale-[1.02] disabled:opacity-60"
           >
-            Render video
+            {isPending ? "Starting…" : "Render video"}
           </button>
         </>
       )}
@@ -87,9 +101,7 @@ export default function VideoPanel({
 
       {status === "failed" && (
         <>
-          <p className="mt-2 text-sm text-red-400">
-            Render failed: {videoError ?? "Unknown error"}
-          </p>
+          <p className="mt-2 text-sm text-red-400">{videoError ?? "Render failed."}</p>
           <button
             type="button"
             onClick={handleRender}

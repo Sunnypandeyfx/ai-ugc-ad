@@ -6,11 +6,15 @@ import { STEPS, stepIndex, statusLabel, type StepKey } from "@/lib/projects";
 import ProjectSettingsForm from "./ProjectSettingsForm";
 import ProductStep from "./_product/ProductStep";
 import BriefStep from "./_brief/BriefStep";
+import ConceptStep from "./_concept/ConceptStep";
+import StoryboardStep from "./_storyboard/StoryboardStep";
+import AgentPanel from "./_agent/AgentPanel";
 
 export const metadata: Metadata = { title: "Project" };
 
-// Product analysis sends several photos to Claude from a server action.
-export const maxDuration = 60;
+// Server actions here call Claude (photo analysis, concepts, storyboards,
+// the assistant); a storyboard can take close to a minute to write.
+export const maxDuration = 120;
 
 export default async function ProjectWorkspacePage({
   params,
@@ -42,6 +46,16 @@ export default async function ProjectWorkspacePage({
   // Steps after the one the project has reached stay locked.
   const viewIndex = Math.min(requestedIndex, reachedIndex);
   const viewStep = STEPS[viewIndex];
+
+  const showAgent = viewStep.key === "storyboard";
+  const { data: messages } = showAgent
+    ? await supabase
+        .from("project_messages")
+        .select("id, role, content, changes")
+        .eq("project_id", project.id)
+        .order("created_at")
+        .limit(100)
+    : { data: null };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
@@ -122,12 +136,27 @@ export default async function ProjectWorkspacePage({
               productId={project.product_id}
               aspectRatio={project.aspect_ratio}
             />
+          ) : viewStep.key === "concept" ? (
+            <ConceptStep projectId={project.id} />
+          ) : viewStep.key === "storyboard" ? (
+            <StoryboardStep projectId={project.id} />
           ) : (
             <StepBody step={viewStep.key} />
           )}
         </section>
 
         <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
+          {showAgent && (
+            <AgentPanel
+              projectId={project.id}
+              messages={(messages ?? []) as {
+                id: string;
+                role: "user" | "assistant";
+                content: string;
+                changes: string[];
+              }[]}
+            />
+          )}
           <div className="rounded-2xl border border-border bg-surface p-5">
             <p className="text-xs uppercase tracking-wide text-accent">Project</p>
             <div className="mt-4">
@@ -154,8 +183,8 @@ function StepBody({ step }: { step: StepKey }) {
     <div className="mt-8 rounded-xl border border-dashed border-border-strong p-6">
       <p className="text-sm text-fg">Not available yet</p>
       <p className="mt-1 text-sm text-fg-muted">
-        {step === "concept"
-          ? "Your product and brief are saved. Three distinct ad concepts, written only from your confirmed facts, arrive in the next update."
+        {step === "shots"
+          ? "Your storyboard is approved and saved. Shot-by-shot generation arrives in the next update — you'll see the credit cost of each shot and confirm before anything is generated."
           : "This step unlocks once the earlier steps are built and completed."}
       </p>
     </div>

@@ -222,6 +222,7 @@ export async function analyzeProduct(projectId: string): Promise<Result> {
     refresh(projectId);
     return { error: null };
   } catch (err) {
+    console.error("product analysis failed", projectId, err);
     const message = err instanceof Error ? err.message : "Analysis failed.";
     await admin
       .from("products")

@@ -1,6 +1,7 @@
 import "server-only";
 import Anthropic from "@anthropic-ai/sdk";
 import type { ProductAnalysis } from "@/lib/product";
+import { asArray } from "@/lib/ai/toolInput";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -115,8 +116,7 @@ export async function analyzeProductImages(images: AnalysisImage[]): Promise<Pro
 }
 
 function list(value: unknown, max = 12): string[] {
-  if (!Array.isArray(value)) return [];
-  return value
+  return asArray(value)
     .filter((v): v is string => typeof v === "string")
     .map((v) => v.trim().slice(0, 200))
     .filter(Boolean)

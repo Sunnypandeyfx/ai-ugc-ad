@@ -72,6 +72,7 @@ create table if not exists public.products (
   name text not null,
   description text,
   image_path text,
+  image_paths text[] not null default '{}',
   created_at timestamptz not null default now()
 );
 
@@ -95,6 +96,7 @@ create table if not exists public.generations (
     check (status in ('queued', 'script_ready', 'failed')),
   script jsonb,
   error text,
+  duration_seconds integer not null default 30,
   avatar_id text,
   avatar_name text,
   voice_id text,
@@ -137,5 +139,48 @@ create policy "Users can delete their own product images"
   on storage.objects for delete
   using (
     bucket_id = 'product-images'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+-- Custom avatars (digital twins) ------------------------------------------
+create table if not exists public.custom_avatars (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  name text not null,
+  heygen_group_id text,
+  heygen_look_id text,
+  voice_id text,
+  training_status text not null default 'uploading'
+    check (training_status in ('uploading', 'training', 'ready', 'failed')),
+  consent_status text not null default 'not_started'
+    check (consent_status in ('not_started', 'pending', 'approved', 'declined')),
+  consent_url text,
+  error text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.custom_avatars enable row level security;
+
+create policy "Users manage their own custom avatars"
+  on public.custom_avatars for all
+  using (auth.uid() = user_id)
+  with check (auth.uid() = user_id);
+
+insert into storage.buckets (id, name, public)
+values ('custom-avatar-footage', 'custom-avatar-footage', false)
+on conflict (id) do nothing;
+
+create policy "Users can upload their own avatar footage"
+  on storage.objects for insert
+  with check (
+    bucket_id = 'custom-avatar-footage'
+    and (storage.foldername(name))[1] = auth.uid()::text
+  );
+
+create policy "Users can read their own avatar footage"
+  on storage.objects for select
+  using (
+    bucket_id = 'custom-avatar-footage'
     and (storage.foldername(name))[1] = auth.uid()::text
   );

@@ -70,11 +70,12 @@ export async function generateAdScript(input: {
   audience: string;
   platform: string;
   tone?: string;
+  durationSeconds: number;
 }): Promise<AdScript> {
   const styleGuidance =
     input.adType === "ugc"
-      ? "Write this as an authentic UGC-style testimonial: one creator speaking directly to camera, casual and specific, not polished ad-speak. 15-30 seconds total."
-      : "Write this as a cinematic, dialogue-light brand commercial: visual, produced scenes showing the product, minimal or no spoken dialogue, voiceover only where it earns its place. 15-30 seconds total.";
+      ? `Write this as an authentic UGC-style testimonial: one creator speaking directly to camera, casual and specific, not polished ad-speak. Exactly ${input.durationSeconds} seconds total.`
+      : `Write this as a cinematic, dialogue-light brand commercial: visual, produced scenes showing the product, minimal or no spoken dialogue, voiceover only where it earns its place. Exactly ${input.durationSeconds} seconds total.`;
 
   const message = await anthropic.messages.create({
     model: "claude-sonnet-5",

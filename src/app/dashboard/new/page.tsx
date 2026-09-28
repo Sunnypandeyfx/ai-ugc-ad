@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { listPublicAvatars, type PublicAvatar } from "@/lib/heygen/client";
+import {
+  listPublicAvatars,
+  getAvatarLookPreview,
+  type PublicAvatar,
+} from "@/lib/heygen/client";
 import NewGenerationForm from "./NewGenerationForm";
 
 export const metadata: Metadata = {
@@ -9,13 +14,40 @@ export const metadata: Metadata = {
   alternates: { canonical: "/dashboard/new" },
 };
 
-async function getAvatars(): Promise<PublicAvatar[]> {
+async function getStockAvatars(): Promise<PublicAvatar[]> {
   if (!process.env.HEYGEN_API_KEY) return [];
   try {
-    return await listPublicAvatars(12);
+    return await listPublicAvatars(11);
   } catch {
     return [];
   }
+}
+
+async function getMyCreators(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<PublicAvatar[]> {
+  const { data } = await supabase
+    .from("custom_avatars")
+    .select("heygen_look_id, name, voice_id")
+    .eq("training_status", "ready")
+    .eq("consent_status", "approved");
+
+  if (!data || data.length === 0) return [];
+
+  const withPreviews = await Promise.all(
+    data.map(async (a) => {
+      const { previewImageUrl } = await getAvatarLookPreview(a.heygen_look_id!);
+      return {
+        id: a.heygen_look_id!,
+        name: `${a.name} (yours)`,
+        gender: null,
+        preview_image_url: previewImageUrl,
+        default_voice_id: a.voice_id,
+      };
+    }),
+  );
+
+  return withPreviews.filter((a) => a.preview_image_url);
 }
 
 export default async function NewGenerationPage() {
@@ -26,7 +58,11 @@ export default async function NewGenerationPage() {
 
   if (!user) redirect("/login?next=/dashboard/new");
 
-  const avatars = await getAvatars();
+  const [myCreators, stockAvatars] = await Promise.all([
+    getMyCreators(supabase),
+    getStockAvatars(),
+  ]);
+  const avatars = [...myCreators, ...stockAvatars];
 
   return (
     <div className="mx-auto max-w-xl px-6 py-16">
@@ -35,7 +71,13 @@ export default async function NewGenerationPage() {
         Tell us about the product. Backlot will draft a script, then you can
         render it with a UGC creator.
       </p>
-      <NewGenerationForm avatars={avatars} />
+      <NewGenerationForm avatars={avatars} userId={user.id} />
+      <p className="mt-6 text-xs text-fg-subtle">
+        Don&rsquo;t see who you want?{" "}
+        <Link href="/dashboard/creators/new" className="text-fg underline underline-offset-4">
+          Train your own creator
+        </Link>
+      </p>
     </div>
   );
 }

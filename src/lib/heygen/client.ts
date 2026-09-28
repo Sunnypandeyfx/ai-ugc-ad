@@ -19,14 +19,18 @@ export type PublicAvatar = {
 
 export async function listPublicAvatars(limit = 12): Promise<PublicAvatar[]> {
   const res = await fetch(
-    `${BASE_URL}/v3/avatars/looks?ownership=public&limit=${limit}`,
+    `${BASE_URL}/v3/avatars/looks?ownership=public&avatar_type=studio_avatar&limit=${Math.max(limit * 2, 24)}`,
     { headers: headers(), cache: "no-store" },
   );
   if (!res.ok) {
     throw new Error(`HeyGen avatar list failed: ${res.status}`);
   }
   const json = await res.json();
-  return (json.data as PublicAvatar[]).filter((a) => a.preview_image_url);
+  const avatars = (json.data as PublicAvatar[]).filter((a) => a.preview_image_url);
+
+  const female = avatars.filter((a) => a.gender === "female");
+  const others = avatars.filter((a) => a.gender !== "female");
+  return [...female, ...others].slice(0, limit);
 }
 
 export async function createAvatarVideo(input: {
@@ -78,6 +82,138 @@ export async function getVideoStatus(videoId: string): Promise<VideoStatus> {
     videoUrl: json.data.video_url ?? null,
     failureMessage: json.data.failure_message ?? null,
   };
+}
+
+export type DirectUploadInit = {
+  assetId: string;
+  uploadUrl: string;
+  uploadHeaders: Record<string, string>;
+};
+
+// Vercel caps a function's request body at 4.5MB, so video footage can never
+// pass through our server — the browser PUTs bytes straight to uploadUrl.
+export async function initDirectUpload(input: {
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+}): Promise<DirectUploadInit> {
+  const res = await fetch(`${BASE_URL}/v3/assets/direct-uploads`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      filename: input.filename,
+      content_type: input.contentType,
+      size_bytes: input.sizeBytes,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`HeyGen upload init failed: ${res.status}`);
+  }
+  const json = await res.json();
+  return {
+    assetId: json.data.asset_id,
+    uploadUrl: json.data.upload_url,
+    uploadHeaders: json.data.upload_headers,
+  };
+}
+
+export async function completeDirectUpload(assetId: string): Promise<void> {
+  const res = await fetch(`${BASE_URL}/v3/assets/${assetId}/complete`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    throw new Error(`HeyGen upload finalize failed: ${res.status}`);
+  }
+}
+
+export async function createDigitalTwin(input: {
+  name: string;
+  assetId: string;
+}): Promise<{ groupId: string; lookId: string; voiceId: string | null }> {
+  const res = await fetch(`${BASE_URL}/v3/avatars`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({
+      type: "digital_twin",
+      name: input.name,
+      file: { type: "asset_id", asset_id: input.assetId },
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HeyGen digital twin creation failed (${res.status}): ${text}`);
+  }
+  const json = await res.json();
+  return {
+    groupId: json.data.avatar_group.id as string,
+    lookId: json.data.avatar_item.id as string,
+    voiceId: json.data.avatar_item.default_voice_id ?? null,
+  };
+}
+
+export async function getAvatarLookStatus(lookId: string): Promise<{
+  status: "processing" | "completed" | "failed";
+  errorMessage: string | null;
+}> {
+  const res = await fetch(`${BASE_URL}/v3/avatars/looks/${lookId}`, {
+    headers: headers(),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`HeyGen look status failed: ${res.status}`);
+  }
+  const json = await res.json();
+  return {
+    status: json.data.status,
+    errorMessage: json.data.error?.message ?? null,
+  };
+}
+
+export async function getAvatarLookPreview(
+  lookId: string,
+): Promise<{ previewImageUrl: string | null }> {
+  const res = await fetch(`${BASE_URL}/v3/avatars/looks/${lookId}`, {
+    headers: headers(),
+    cache: "no-store",
+  });
+  if (!res.ok) return { previewImageUrl: null };
+  const json = await res.json();
+  return { previewImageUrl: json.data.preview_image_url ?? null };
+}
+
+export async function requestAvatarConsent(
+  groupId: string,
+): Promise<{ consentUrl: string; consentStatus: string }> {
+  const res = await fetch(`${BASE_URL}/v3/avatars/${groupId}/consent`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({}),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HeyGen consent request failed (${res.status}): ${text}`);
+  }
+  const json = await res.json();
+  return {
+    consentUrl: json.data.url as string,
+    consentStatus: json.data.avatar_group.consent_status as string,
+  };
+}
+
+export async function getAvatarGroupConsentStatus(
+  groupId: string,
+): Promise<string | null> {
+  const res = await fetch(`${BASE_URL}/v3/avatars/${groupId}`, {
+    headers: headers(),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    throw new Error(`HeyGen group status failed: ${res.status}`);
+  }
+  const json = await res.json();
+  return json.data.consent_status ?? null;
 }
 
 export function scriptToNarration(script: {

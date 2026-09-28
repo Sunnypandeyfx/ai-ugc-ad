@@ -1,6 +1,5 @@
 "use server";
 
-import { randomUUID } from "crypto";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { generateAdScript } from "@/lib/ai/generateScript";
@@ -24,7 +23,8 @@ export async function createGeneration(
   const platform = String(formData.get("platform") || "TikTok");
   const tone = String(formData.get("tone") || "").trim();
   const adType = String(formData.get("adType") || "ugc") as "ugc" | "cinematic";
-  const image = formData.get("image") as File | null;
+  const durationSeconds = Number(formData.get("duration") || 30);
+  const imagePaths = formData.getAll("imagePaths").map(String).filter(Boolean);
   const avatarId = String(formData.get("avatarId") || "").trim();
   const avatarName = String(formData.get("avatarName") || "").trim();
   const voiceId = String(formData.get("voiceId") || "").trim();
@@ -33,20 +33,15 @@ export async function createGeneration(
     return { error: "Product name, description, and audience are required." };
   }
 
-  let imagePath: string | null = null;
-  if (image && image.size > 0) {
-    imagePath = `${user.id}/${randomUUID()}-${image.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("product-images")
-      .upload(imagePath, image);
-    if (uploadError) {
-      return { error: `Image upload failed: ${uploadError.message}` };
-    }
-  }
-
   const { data: product, error: productError } = await supabase
     .from("products")
-    .insert({ user_id: user.id, name, description, image_path: imagePath })
+    .insert({
+      user_id: user.id,
+      name,
+      description,
+      image_path: imagePaths[0] ?? null,
+      image_paths: imagePaths,
+    })
     .select("id")
     .single();
 
@@ -63,6 +58,7 @@ export async function createGeneration(
       audience,
       tone: tone || null,
       platform,
+      duration_seconds: durationSeconds,
       status: "queued",
       avatar_id: adType === "ugc" && avatarId ? avatarId : null,
       avatar_name: adType === "ugc" && avatarName ? avatarName : null,
@@ -83,6 +79,7 @@ export async function createGeneration(
       audience,
       platform,
       tone,
+      durationSeconds,
     });
 
     await supabase

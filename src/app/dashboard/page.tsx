@@ -39,6 +39,12 @@ export default async function DashboardPage() {
         <div>
           <h1 className="font-display text-3xl tracking-tight">Your ads</h1>
           <p className="mt-1 text-sm text-fg-muted">{user.email}</p>
+          <Link
+            href="/dashboard/creators"
+            className="mt-2 inline-block text-xs text-fg-muted underline underline-offset-4 hover:text-fg"
+          >
+            My creators
+          </Link>
         </div>
         <div className="flex flex-col items-end gap-2">
           <Link

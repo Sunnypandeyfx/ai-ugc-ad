@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { siteConfig } from "@/lib/seo";
 
@@ -14,9 +14,27 @@ const NAV_LINKS = [
   { href: "#faq", label: "FAQ" },
 ];
 
-export default function Header({ userEmail }: { userEmail: string | null }) {
+export default function Header() {
   const [open, setOpen] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return;
+    const supabase = createClient();
+
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? null);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user?.email ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   async function handleSignOut() {
     const supabase = createClient();

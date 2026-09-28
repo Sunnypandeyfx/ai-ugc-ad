@@ -33,39 +33,59 @@ export default function NewGenerationForm({
   const [selectedAvatar, setSelectedAvatar] = useState<PublicAvatar | null>(
     avatars[0] ?? null,
   );
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [imagePaths, setImagePaths] = useState<string[]>([]);
-  const [uploadingImages, setUploadingImages] = useState(false);
+  type PendingImage = {
+    id: string;
+    previewUrl: string;
+    path: string | null;
+    uploading: boolean;
+  };
+  const [images, setImages] = useState<PendingImage[]>([]);
   const [imageError, setImageError] = useState<string | null>(null);
+  const uploadingImages = images.some((img) => img.uploading);
 
   async function handleImagesChange(e: React.ChangeEvent<HTMLInputElement>) {
     const files = Array.from(e.target.files ?? []);
+    e.target.value = ""; // allow picking the same file again later
     if (files.length === 0) return;
 
-    imagePreviews.forEach((url) => URL.revokeObjectURL(url));
-    setImagePreviews(files.map((f) => URL.createObjectURL(f)));
-    setImagePaths([]);
     setImageError(null);
-    setUploadingImages(true);
+    const newImages: PendingImage[] = files.map((file) => ({
+      id: crypto.randomUUID(),
+      previewUrl: URL.createObjectURL(file),
+      path: null,
+      uploading: true,
+    }));
+    setImages((prev) => [...prev, ...newImages]);
 
-    try {
-      const supabase = createClient();
-      const paths = await Promise.all(
-        files.map(async (file) => {
+    const supabase = createClient();
+    await Promise.all(
+      files.map(async (file, i) => {
+        const entry = newImages[i];
+        try {
           const path = `${userId}/${crypto.randomUUID()}-${file.name}`;
           const { error } = await supabase.storage
             .from("product-images")
             .upload(path, file);
           if (error) throw error;
-          return path;
-        }),
-      );
-      setImagePaths(paths);
-    } catch (err) {
-      setImageError(err instanceof Error ? err.message : "Image upload failed.");
-    } finally {
-      setUploadingImages(false);
-    }
+          setImages((prev) =>
+            prev.map((img) =>
+              img.id === entry.id ? { ...img, path, uploading: false } : img,
+            ),
+          );
+        } catch (err) {
+          setImageError(err instanceof Error ? err.message : "Image upload failed.");
+          setImages((prev) => prev.filter((img) => img.id !== entry.id));
+        }
+      }),
+    );
+  }
+
+  function removeImage(id: string) {
+    setImages((prev) => {
+      const target = prev.find((img) => img.id === id);
+      if (target) URL.revokeObjectURL(target.previewUrl);
+      return prev.filter((img) => img.id !== id);
+    });
   }
 
   return (
@@ -109,16 +129,25 @@ export default function NewGenerationForm({
           onChange={handleImagesChange}
           className="mt-1.5 w-full rounded-lg border border-dashed border-border-strong bg-surface px-3 py-2.5 text-sm text-fg-muted file:mr-3 file:rounded-full file:border-0 file:bg-surface-2 file:px-3 file:py-1.5 file:text-xs file:text-fg"
         />
-        {imagePreviews.length > 0 && (
+        {images.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
-            {imagePreviews.map((url, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={i}
-                src={url}
-                alt=""
-                className="h-16 w-16 rounded-lg object-cover"
-              />
+            {images.map((img) => (
+              <div key={img.id} className="group relative h-16 w-16">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={img.previewUrl}
+                  alt=""
+                  className={`h-16 w-16 rounded-lg object-cover ${img.uploading ? "opacity-50" : ""}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => removeImage(img.id)}
+                  aria-label="Remove photo"
+                  className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-bg text-xs text-fg-muted opacity-0 transition-opacity group-hover:opacity-100 hover:text-fg"
+                >
+                  ✕
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -126,9 +155,11 @@ export default function NewGenerationForm({
           <p className="mt-2 text-xs text-fg-subtle">Uploading photos…</p>
         )}
         {imageError && <p className="mt-2 text-xs text-red-400">{imageError}</p>}
-        {imagePaths.map((path) => (
-          <input key={path} type="hidden" name="imagePaths" value={path} />
-        ))}
+        {images
+          .filter((img) => img.path)
+          .map((img) => (
+            <input key={img.id} type="hidden" name="imagePaths" value={img.path!} />
+          ))}
       </div>
 
       <div>

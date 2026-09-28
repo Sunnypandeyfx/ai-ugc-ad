@@ -3,8 +3,46 @@ import { dodo, PLANS, planForProductId } from "@/lib/dodo/client";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Dodo webhooks arrive with no logged-in session, so this route uses the
-// service-role client (bypasses RLS) rather than the per-user server client
-// used everywhere else in this app.
+// service-role client. The claim (idempotency) and the profile update happen
+// together inside apply_dodo_subscription_event(), so a failed write rolls
+// the claim back and Dodo's retry can process the event again.
+
+type SubscriptionPayload = {
+  metadata?: Record<string, string>;
+  customer?: { customer_id?: string; email?: string };
+  product_id?: string;
+  subscription_id?: string;
+  cancel_at_next_billing_date?: boolean;
+};
+
+type Update = {
+  plan: string | null;
+  status: string | null;
+  credits: number | null;
+};
+
+function updateFor(type: string, data: SubscriptionPayload): Update | null {
+  switch (type) {
+    case "subscription.active":
+    case "subscription.renewed": {
+      const planId = data.product_id ? planForProductId(data.product_id) : null;
+      if (!planId) return null;
+      return { plan: planId, status: "active", credits: PLANS[planId].monthlyCredits };
+    }
+    case "subscription.on_hold":
+      return { plan: null, status: "on_hold", credits: null };
+    case "subscription.cancelled":
+      // Cancel-at-period-end keeps the plan until subscription.expired fires.
+      return data.cancel_at_next_billing_date
+        ? { plan: null, status: "cancelled", credits: null }
+        : { plan: "free", status: "cancelled", credits: null };
+    case "subscription.expired":
+    case "subscription.failed":
+      return { plan: "free", status: "expired", credits: null };
+    default:
+      return null;
+  }
+}
 
 export async function POST(req: Request) {
   const raw = await req.text();
@@ -29,107 +67,34 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid signature." }, { status: 401 });
   }
 
+  const data = event.data as SubscriptionPayload;
+  const update = updateFor(event.type, data);
+  if (!update) {
+    return NextResponse.json({ received: true, ignored: event.type });
+  }
+
   const supabase = createAdminClient();
+  const { data: outcome, error } = await supabase.rpc("apply_dodo_subscription_event", {
+    p_webhook_id: webhookId,
+    p_event_type: event.type,
+    p_user_id: data.metadata?.supabase_user_id ?? null,
+    p_customer_id: data.customer?.customer_id ?? null,
+    p_email: data.customer?.email ?? null,
+    p_subscription_id: data.subscription_id ?? null,
+    p_plan: update.plan,
+    p_status: update.status,
+    p_credits: update.credits,
+  });
 
-  // Idempotency: claim this webhook-id before doing any writes. If it's
-  // already claimed, this is a Dodo retry of an event we already processed.
-  const { error: claimError } = await supabase
-    .from("dodo_webhook_log")
-    .insert({ webhook_id: webhookId, event_type: event.type });
-
-  if (claimError) {
-    // Unique-constraint violation = already processed. Any other DB error
-    // should make Dodo retry, so surface it as a failure.
-    if (claimError.code === "23505") {
-      return NextResponse.json({ received: true, duplicate: true });
-    }
-    return NextResponse.json({ error: claimError.message }, { status: 503 });
+  if (error) {
+    // Non-2xx makes Dodo retry; the transaction already rolled back the claim.
+    console.error("Dodo webhook apply failed", event.type, error.message);
+    return NextResponse.json({ error: "Could not apply event." }, { status: 500 });
   }
 
-  const data = event.data as {
-    metadata?: Record<string, string>;
-    customer?: { customer_id?: string };
-    product_id?: string;
-    subscription_id?: string;
-    cancel_at_next_billing_date?: boolean;
-  };
-
-  const supabaseUserId = data.metadata?.supabase_user_id;
-  const customerId = data.customer?.customer_id;
-
-  async function findUserId(): Promise<string | null> {
-    if (supabaseUserId) return supabaseUserId;
-    if (!customerId) return null;
-    const { data: row } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("dodo_customer_id", customerId)
-      .single();
-    return row?.id ?? null;
+  if (outcome === "unmatched") {
+    console.error("Dodo webhook matched no user", event.type, webhookId);
   }
 
-  switch (event.type) {
-    case "subscription.active":
-    case "subscription.renewed": {
-      const userId = await findUserId();
-      const planId = data.product_id ? planForProductId(data.product_id) : null;
-      if (userId && planId) {
-        await supabase
-          .from("profiles")
-          .update({
-            plan: planId,
-            dodo_customer_id: customerId ?? undefined,
-            dodo_subscription_id: data.subscription_id ?? undefined,
-            subscription_status: "active",
-            credits_remaining: PLANS[planId].monthlyCredits,
-          })
-          .eq("id", userId);
-      }
-      break;
-    }
-
-    case "subscription.on_hold": {
-      const userId = await findUserId();
-      if (userId) {
-        await supabase
-          .from("profiles")
-          .update({ subscription_status: "on_hold" })
-          .eq("id", userId);
-      }
-      break;
-    }
-
-    case "subscription.cancelled": {
-      const userId = await findUserId();
-      if (userId && !data.cancel_at_next_billing_date) {
-        await supabase
-          .from("profiles")
-          .update({ subscription_status: "cancelled", plan: "free" })
-          .eq("id", userId);
-      } else if (userId) {
-        await supabase
-          .from("profiles")
-          .update({ subscription_status: "cancelled" })
-          .eq("id", userId);
-      }
-      break;
-    }
-
-    case "subscription.expired":
-    case "subscription.failed": {
-      const userId = await findUserId();
-      if (userId) {
-        await supabase
-          .from("profiles")
-          .update({ subscription_status: "expired", plan: "free" })
-          .eq("id", userId);
-      }
-      break;
-    }
-
-    default:
-      break;
-  }
-
-  return NextResponse.json({ received: true });
+  return NextResponse.json({ received: true, outcome });
 }

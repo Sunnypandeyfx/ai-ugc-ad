@@ -14,7 +14,7 @@ const STEPS = [
   {
     n: "03",
     title: "AI shoots it",
-    body: "Pick a UGC creator for an authentic testimonial or a cinematic scene for a studio-grade commercial.",
+    body: "Pick a UGC creator to present and demo your product, or a cinematic scene for a studio-grade commercial.",
   },
   {
     n: "04",

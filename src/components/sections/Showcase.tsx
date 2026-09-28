@@ -4,7 +4,7 @@ const EXAMPLES = [
   {
     label: "UGC",
     category: "Skincare",
-    hook: "“Okay I was NOT expecting this in week one—”",
+    hook: "“Okay, let me show you what’s actually in this bottle—”",
     gradient: "from-[#3a2418] via-[#211417] to-[#0c0b0d]",
   },
   {
@@ -16,7 +16,7 @@ const EXAMPLES = [
   {
     label: "UGC",
     category: "Supplements",
-    hook: "“My morning routine changed after I started—”",
+    hook: "“Three things to know before you buy this—”",
     gradient: "from-[#20301f] via-[#141a15] to-[#0c0b0d]",
   },
 ];

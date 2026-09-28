@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requestAvatarConsent } from "@/lib/heygen/client";
 
 export type ConsentResult = { error: string | null; consentUrl: string | null };
@@ -16,11 +17,14 @@ export async function startConsent(customAvatarId: string): Promise<ConsentResul
 
   const { data: avatar, error } = await supabase
     .from("custom_avatars")
-    .select("id, heygen_group_id, training_status")
+    .select("id, heygen_group_id, training_status, source")
     .eq("id", customAvatarId)
     .single();
 
   if (error || !avatar) return { error: "Creator not found.", consentUrl: null };
+  if (avatar.source !== "digital_twin") {
+    return { error: "Only uploaded real-person creators need consent.", consentUrl: null };
+  }
   if (avatar.training_status !== "ready") {
     return { error: "Training isn't finished yet.", consentUrl: null };
   }
@@ -29,17 +33,18 @@ export async function startConsent(customAvatarId: string): Promise<ConsentResul
   }
 
   try {
-    const { consentUrl, consentStatus } = await requestAvatarConsent(
-      avatar.heygen_group_id,
-    );
-    await supabase
+    const { consentUrl } = await requestAvatarConsent(avatar.heygen_group_id);
+    // Approval is only ever recorded from HeyGen's own status (status route),
+    // never from this request.
+    await createAdminClient()
       .from("custom_avatars")
       .update({
         consent_url: consentUrl,
-        consent_status: consentStatus || "pending",
+        consent_status: "pending",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", customAvatarId);
+      .eq("id", customAvatarId)
+      .eq("user_id", user.id);
 
     revalidatePath(`/dashboard/creators/${customAvatarId}`);
     return { error: null, consentUrl };

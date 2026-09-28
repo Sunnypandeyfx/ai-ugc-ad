@@ -2,9 +2,12 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { generateAdScript } from "@/lib/ai/generateScript";
 
 export type CreateGenerationState = { error: string | null };
+
+const DURATIONS = new Set([15, 30, 45, 60]);
 
 export async function createGeneration(
   _prevState: CreateGenerationState,
@@ -22,8 +25,10 @@ export async function createGeneration(
   const audience = String(formData.get("audience") || "").trim();
   const platform = String(formData.get("platform") || "TikTok");
   const tone = String(formData.get("tone") || "").trim();
-  const adType = String(formData.get("adType") || "ugc") as "ugc" | "cinematic";
-  const durationSeconds = Number(formData.get("duration") || 30);
+  const adType: "ugc" | "cinematic" =
+    formData.get("adType") === "cinematic" ? "cinematic" : "ugc";
+  const requestedDuration = Number(formData.get("duration") || 30);
+  const durationSeconds = DURATIONS.has(requestedDuration) ? requestedDuration : 30;
   const imagePaths = formData.getAll("imagePaths").map(String).filter(Boolean);
   const avatarId = String(formData.get("avatarId") || "").trim();
   const avatarName = String(formData.get("avatarName") || "").trim();
@@ -33,8 +38,14 @@ export async function createGeneration(
   if (!name || !description || !audience) {
     return { error: "Product name, description, and audience are required." };
   }
+  // Paths come from the browser; only accept files in this user's own folder.
+  if (imagePaths.some((p) => !p.startsWith(`${user.id}/`) || p.includes(".."))) {
+    return { error: "One of the uploaded photos is invalid. Please re-upload it." };
+  }
 
-  const { data: product, error: productError } = await supabase
+  const admin = createAdminClient();
+
+  const { data: product, error: productError } = await admin
     .from("products")
     .insert({
       user_id: user.id,
@@ -50,7 +61,7 @@ export async function createGeneration(
     return { error: productError?.message || "Could not save product." };
   }
 
-  const { data: generation, error: generationError } = await supabase
+  const { data: generation, error: generationError } = await admin
     .from("generations")
     .insert({
       user_id: user.id,
@@ -84,19 +95,21 @@ export async function createGeneration(
       durationSeconds,
     });
 
-    await supabase
+    await admin
       .from("generations")
       .update({ status: "script_ready", script, updated_at: new Date().toISOString() })
-      .eq("id", generation.id);
+      .eq("id", generation.id)
+      .eq("user_id", user.id);
   } catch (err) {
-    await supabase
+    await admin
       .from("generations")
       .update({
         status: "failed",
         error: err instanceof Error ? err.message : "Generation failed.",
         updated_at: new Date().toISOString(),
       })
-      .eq("id", generation.id);
+      .eq("id", generation.id)
+      .eq("user_id", user.id);
   }
 
   redirect(`/dashboard/${generation.id}`);

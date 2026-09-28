@@ -3,7 +3,7 @@ import Reveal from "@/components/Reveal";
 export const FAQ_ITEMS = [
   {
     q: "What's the difference between a UGC ad and a cinematic commercial?",
-    a: "A UGC ad features an AI creator speaking to camera in an authentic, testimonial style — built for TikTok and Reels feeds. A cinematic commercial is a produced, dialogue-free scene showing your product in a studio-quality setting, closer to a traditional brand spot.",
+    a: "A UGC ad features an AI creator speaking to camera in a casual, social-native style, presenting and demoing your product — built for TikTok and Reels feeds. Because the creator is AI, Backlot never scripts fake personal testimonials. A cinematic commercial is a produced, dialogue-free scene showing your product in a studio-quality setting, closer to a traditional brand spot.",
   },
   {
     q: "Do I need any filming or editing experience?",

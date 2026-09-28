@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createAvatarVideo, scriptToNarration } from "@/lib/heygen/client";
+import { creatorUseError } from "@/lib/heygen/ownership";
 import type { AdScript } from "@/lib/ai/generateScript";
 
 export type RenderVideoResult = { error: string | null };
@@ -15,9 +17,10 @@ export async function renderVideo(generationId: string): Promise<RenderVideoResu
 
   if (!user) return { error: "Not signed in." };
 
+  // Read through the user's session so RLS proves ownership.
   const { data: generation, error } = await supabase
     .from("generations")
-    .select("id, script, avatar_id, voice_id, engine, status")
+    .select("id, script, avatar_id, voice_id, engine, status, video_status")
     .eq("id", generationId)
     .single();
 
@@ -25,9 +28,24 @@ export async function renderVideo(generationId: string): Promise<RenderVideoResu
   if (generation.status !== "script_ready") {
     return { error: "Script isn't ready yet." };
   }
+  if (generation.video_status === "rendering") {
+    return { error: "This ad is already rendering." };
+  }
+  if (generation.video_status === "ready") {
+    return { error: "This ad already has a finished video." };
+  }
   if (!generation.avatar_id || !generation.voice_id) {
     return { error: "No creator was selected for this ad." };
   }
+
+  const admin = createAdminClient();
+  const creatorError = await creatorUseError(
+    admin,
+    user.id,
+    generation.avatar_id,
+    generation.voice_id,
+  );
+  if (creatorError) return { error: creatorError };
 
   const { data: remainingCredits, error: creditError } =
     await supabase.rpc("consume_credit");
@@ -41,10 +59,11 @@ export async function renderVideo(generationId: string): Promise<RenderVideoResu
     };
   }
 
-  await supabase
+  await admin
     .from("generations")
     .update({ video_status: "rendering", video_error: null })
-    .eq("id", generationId);
+    .eq("id", generationId)
+    .eq("user_id", user.id);
 
   try {
     const narration = scriptToNarration(generation.script as AdScript);
@@ -56,18 +75,20 @@ export async function renderVideo(generationId: string): Promise<RenderVideoResu
       engine: generation.engine,
     });
 
-    await supabase
+    await admin
       .from("generations")
       .update({ heygen_video_id: videoId })
-      .eq("id", generationId);
+      .eq("id", generationId)
+      .eq("user_id", user.id);
   } catch (err) {
-    await supabase
+    await admin
       .from("generations")
       .update({
         video_status: "failed",
         video_error: err instanceof Error ? err.message : "Render failed to start.",
       })
-      .eq("id", generationId);
+      .eq("id", generationId)
+      .eq("user_id", user.id);
   }
 
   revalidatePath(`/dashboard/${generationId}`);

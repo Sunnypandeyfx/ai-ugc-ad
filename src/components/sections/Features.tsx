@@ -3,7 +3,7 @@ import Reveal from "@/components/Reveal";
 const FEATURES = [
   {
     title: "UGC creators",
-    body: "A cast of AI creators delivers authentic-feeling reviews and demos — no talent booking, no shoot day.",
+    body: "A cast of AI creators presents and demos your product to camera — no talent booking, no shoot day.",
   },
   {
     title: "Cinematic commercials",

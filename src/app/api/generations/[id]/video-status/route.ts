@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { getVideoStatus } from "@/lib/heygen/client";
 
 export async function GET(
@@ -35,23 +36,26 @@ export async function GET(
   }
 
   const heygenStatus = await getVideoStatus(generation.heygen_video_id);
+  const admin = createAdminClient();
 
   if (heygenStatus.status === "completed") {
-    await supabase
+    await admin
       .from("generations")
       .update({ video_status: "ready", video_url: heygenStatus.videoUrl })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user.id);
     return NextResponse.json({ video_status: "ready", video_url: heygenStatus.videoUrl });
   }
 
   if (heygenStatus.status === "failed") {
-    await supabase
+    await admin
       .from("generations")
       .update({
         video_status: "failed",
         video_error: heygenStatus.failureMessage ?? "Render failed.",
       })
-      .eq("id", id);
+      .eq("id", id)
+      .eq("user_id", user.id);
     return NextResponse.json({
       video_status: "failed",
       video_error: heygenStatus.failureMessage,

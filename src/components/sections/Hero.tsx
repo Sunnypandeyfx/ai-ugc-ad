@@ -121,7 +121,7 @@ function TransformCard() {
           </div>
           <div className="absolute inset-x-3 bottom-3 rounded-lg bg-black/50 p-2 backdrop-blur">
             <p className="text-[11px] leading-snug text-white">
-              &ldquo;I didn&rsquo;t expect it to actually work this well
+              &ldquo;Here&rsquo;s why this one&rsquo;s different
               &mdash;&rdquo;
             </p>
             <div className="mt-1.5 h-1 w-3/4 rounded-full bg-white/25" />

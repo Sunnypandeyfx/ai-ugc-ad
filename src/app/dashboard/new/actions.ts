@@ -28,6 +28,7 @@ export async function createGeneration(
   const avatarId = String(formData.get("avatarId") || "").trim();
   const avatarName = String(formData.get("avatarName") || "").trim();
   const voiceId = String(formData.get("voiceId") || "").trim();
+  const engine = String(formData.get("engine") || "").trim();
 
   if (!name || !description || !audience) {
     return { error: "Product name, description, and audience are required." };
@@ -63,6 +64,7 @@ export async function createGeneration(
       avatar_id: adType === "ugc" && avatarId ? avatarId : null,
       avatar_name: adType === "ugc" && avatarName ? avatarName : null,
       voice_id: adType === "ugc" && voiceId ? voiceId : null,
+      engine: adType === "ugc" && engine ? engine : null,
     })
     .select("id")
     .single();

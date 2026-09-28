@@ -40,13 +40,16 @@ async function getMyCreators(
 
   const withPreviews = await Promise.all(
     data.map(async (a) => {
-      const { previewImageUrl } = await getAvatarLookPreview(a.heygen_look_id!);
+      const { previewImageUrl, supportedApiEngines } = await getAvatarLookPreview(
+        a.heygen_look_id!,
+      );
       return {
         id: a.heygen_look_id!,
         name: `${a.name} (yours)`,
         gender: null,
         preview_image_url: previewImageUrl,
         default_voice_id: a.voice_id,
+        supported_api_engines: supportedApiEngines,
         category: "custom" as const,
       };
     }),

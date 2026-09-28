@@ -15,38 +15,67 @@ export type PublicAvatar = {
   gender: string | null;
   preview_image_url: string | null;
   default_voice_id: string | null;
+  supported_api_engines?: string[];
 };
 
-export async function listPublicAvatars(limit = 12): Promise<PublicAvatar[]> {
-  const fetchLimit = Math.min(Math.max(limit * 2, 24), 50);
-  const res = await fetch(
-    `${BASE_URL}/v3/avatars/looks?ownership=public&avatar_type=studio_avatar&limit=${fetchLimit}`,
-    { headers: headers(), cache: "no-store" },
-  );
-  if (!res.ok) {
-    throw new Error(`HeyGen avatar list failed: ${res.status}`);
-  }
-  const json = await res.json();
-  const avatars = (json.data as PublicAvatar[]).filter((a) => a.preview_image_url);
+type HeygenVoice = {
+  voice_id: string;
+  gender: string;
+  language: string;
+};
 
-  const female = avatars.filter((a) => a.gender === "female");
-  const others = avatars.filter((a) => a.gender !== "female");
-  return [...female, ...others].slice(0, limit);
+let voiceCache: HeygenVoice[] | null = null;
+
+// The avatar listing's own `default_voice_id` field is unreliable — HeyGen
+// has returned ids for voices that then 400 as "not found" when rendering.
+// GET /v3/voices is the real, renderable catalog, so we source voice ids
+// from there instead and never trust an avatar look's claimed default.
+async function listVoices(): Promise<HeygenVoice[]> {
+  if (voiceCache) return voiceCache;
+  const res = await fetch(`${BASE_URL}/v3/voices?limit=100`, {
+    headers: headers(),
+    cache: "no-store",
+  });
+  if (!res.ok) return [];
+  const json = await res.json();
+  voiceCache = (json.data as HeygenVoice[]) ?? [];
+  return voiceCache;
 }
 
 export async function getDefaultVoiceId(
   gender: "male" | "female",
 ): Promise<string | null> {
-  const res = await fetch(
-    `${BASE_URL}/v3/avatars/looks?ownership=public&avatar_type=studio_avatar&limit=50`,
-    { headers: headers(), cache: "no-store" },
-  );
-  if (!res.ok) return null;
+  const voices = await listVoices();
+  const match =
+    voices.find((v) => v.gender === gender && v.language === "English") ??
+    voices.find((v) => v.gender === gender);
+  return match?.voice_id ?? null;
+}
+
+export async function listPublicAvatars(limit = 12): Promise<PublicAvatar[]> {
+  const fetchLimit = Math.min(Math.max(limit * 2, 24), 50);
+  const [res, femaleVoice, maleVoice] = await Promise.all([
+    fetch(
+      `${BASE_URL}/v3/avatars/looks?ownership=public&avatar_type=studio_avatar&limit=${fetchLimit}`,
+      { headers: headers(), cache: "no-store" },
+    ),
+    getDefaultVoiceId("female"),
+    getDefaultVoiceId("male"),
+  ]);
+  if (!res.ok) {
+    throw new Error(`HeyGen avatar list failed: ${res.status}`);
+  }
   const json = await res.json();
-  const match = (json.data as PublicAvatar[]).find(
-    (a) => a.gender === gender && a.default_voice_id,
-  );
-  return match?.default_voice_id ?? null;
+  const avatars = (json.data as PublicAvatar[])
+    .filter((a) => a.preview_image_url)
+    .map((a) => ({
+      ...a,
+      default_voice_id: a.gender === "male" ? maleVoice : femaleVoice,
+    }));
+
+  const female = avatars.filter((a) => a.gender === "female");
+  const others = avatars.filter((a) => a.gender !== "female");
+  return [...female, ...others].slice(0, limit);
 }
 
 export async function createAvatarVideo(input: {
@@ -54,6 +83,7 @@ export async function createAvatarVideo(input: {
   voiceId: string;
   script: string;
   title: string;
+  engine?: string | null;
 }): Promise<{ videoId: string }> {
   const res = await fetch(`${BASE_URL}/v3/videos`, {
     method: "POST",
@@ -66,6 +96,7 @@ export async function createAvatarVideo(input: {
       title: input.title,
       resolution: "720p",
       aspect_ratio: "9:16",
+      ...(input.engine ? { engine: { type: input.engine } } : {}),
     }),
   });
 
@@ -212,16 +243,20 @@ export async function createPromptAvatar(input: {
   };
 }
 
-export async function getAvatarLookPreview(
-  lookId: string,
-): Promise<{ previewImageUrl: string | null }> {
+export async function getAvatarLookPreview(lookId: string): Promise<{
+  previewImageUrl: string | null;
+  supportedApiEngines: string[];
+}> {
   const res = await fetch(`${BASE_URL}/v3/avatars/looks/${lookId}`, {
     headers: headers(),
     cache: "no-store",
   });
-  if (!res.ok) return { previewImageUrl: null };
+  if (!res.ok) return { previewImageUrl: null, supportedApiEngines: [] };
   const json = await res.json();
-  return { previewImageUrl: json.data.preview_image_url ?? null };
+  return {
+    previewImageUrl: json.data.preview_image_url ?? null,
+    supportedApiEngines: json.data.supported_api_engines ?? [],
+  };
 }
 
 export async function requestAvatarConsent(

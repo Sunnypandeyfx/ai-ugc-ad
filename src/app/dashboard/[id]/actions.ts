@@ -17,7 +17,7 @@ export async function renderVideo(generationId: string): Promise<RenderVideoResu
 
   const { data: generation, error } = await supabase
     .from("generations")
-    .select("id, script, avatar_id, voice_id, status")
+    .select("id, script, avatar_id, voice_id, engine, status")
     .eq("id", generationId)
     .single();
 
@@ -53,6 +53,7 @@ export async function renderVideo(generationId: string): Promise<RenderVideoResu
       voiceId: generation.voice_id,
       script: narration,
       title: `Backlot ad ${generationId}`,
+      engine: generation.engine,
     });
 
     await supabase

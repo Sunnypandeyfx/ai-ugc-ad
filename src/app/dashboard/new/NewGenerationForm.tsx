@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import type { PublicAvatar } from "@/lib/heygen/client";
+import { preferredEngine } from "@/lib/heygen/engine";
 import { createClient } from "@/lib/supabase/client";
 import { createGeneration, type CreateGenerationState } from "./actions";
 
@@ -364,6 +365,11 @@ export default function NewGenerationForm({
             type="hidden"
             name="voiceId"
             value={selectedAvatar?.default_voice_id ?? ""}
+          />
+          <input
+            type="hidden"
+            name="engine"
+            value={preferredEngine(selectedAvatar?.supported_api_engines) ?? ""}
           />
         </div>
       )}

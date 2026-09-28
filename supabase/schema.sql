@@ -99,6 +99,7 @@ create table if not exists public.generations (
   duration_seconds integer not null default 30,
   avatar_id text,
   avatar_name text,
+  engine text,
   voice_id text,
   heygen_video_id text,
   video_status text not null default 'not_started'

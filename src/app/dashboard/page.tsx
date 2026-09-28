@@ -24,7 +24,7 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("credits_remaining")
+    .select("credits_remaining, plan")
     .eq("id", user.id)
     .single();
 
@@ -39,12 +39,20 @@ export default async function DashboardPage() {
         <div>
           <h1 className="font-display text-3xl tracking-tight">Your ads</h1>
           <p className="mt-1 text-sm text-fg-muted">{user.email}</p>
-          <Link
-            href="/dashboard/creators"
-            className="mt-2 inline-block text-xs text-fg-muted underline underline-offset-4 hover:text-fg"
-          >
-            My creators
-          </Link>
+          <div className="mt-2 flex gap-3">
+            <Link
+              href="/dashboard/creators"
+              className="text-xs text-fg-muted underline underline-offset-4 hover:text-fg"
+            >
+              My creators
+            </Link>
+            <Link
+              href="/dashboard/billing"
+              className="text-xs text-fg-muted underline underline-offset-4 hover:text-fg"
+            >
+              Billing
+            </Link>
+          </div>
         </div>
         <div className="flex flex-col items-end gap-2">
           <Link
@@ -55,7 +63,10 @@ export default async function DashboardPage() {
           </Link>
           {profile && (
             <span className="text-xs text-fg-subtle">
-              {profile.credits_remaining} free render
+              {profile.plan !== "free" && (
+                <span className="capitalize">{profile.plan} · </span>
+              )}
+              {profile.credits_remaining} render
               {profile.credits_remaining === 1 ? "" : "s"} left
             </span>
           )}

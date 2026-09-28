@@ -6,8 +6,25 @@ create table if not exists public.profiles (
   email text not null,
   full_name text,
   credits_remaining integer not null default 3,
+  plan text not null default 'free' check (plan in ('free', 'starter', 'growth', 'agency')),
+  dodo_customer_id text,
+  dodo_subscription_id text,
+  subscription_status text not null default 'none'
+    check (subscription_status in ('none', 'active', 'on_hold', 'cancelled', 'expired')),
   created_at timestamptz not null default now()
 );
+
+create index if not exists profiles_dodo_customer_id_idx
+  on public.profiles (dodo_customer_id);
+
+create table if not exists public.dodo_webhook_log (
+  webhook_id text primary key,
+  event_type text not null,
+  created_at timestamptz not null default now()
+);
+
+alter table public.dodo_webhook_log enable row level security;
+-- No policies: written only by the webhook route via the service-role key.
 
 alter table public.profiles enable row level security;
 

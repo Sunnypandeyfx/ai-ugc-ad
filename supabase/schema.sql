@@ -204,3 +204,6 @@ create policy "Users can read their own avatar footage"
     bucket_id = 'custom-avatar-footage'
     and (storage.foldername(name))[1] = auth.uid()::text
   );
+
+-- This file covers migrations 001-008. For a fresh database, run it and
+-- then every migration_0NN_*.sql from 009 onward, in order.

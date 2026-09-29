@@ -13,6 +13,7 @@
   --accent: #ff6a39;
   --accent-soft: #ff6a3922;
   --accent-2: #8c6cff;
+  --accent-pink: #ff4fc3;
   --accent-fg: #0b0a09;
   --radius: 14px;
 }
@@ -29,6 +30,7 @@
   --color-fg-subtle: var(--fg-subtle);
   --color-accent: var(--accent);
   --color-accent-2: var(--accent-2);
+  --color-accent-pink: var(--accent-pink);
   --color-accent-fg: var(--accent-fg);
   --font-display: var(--font-fraunces);
   --font-sans: var(--font-inter);
@@ -91,6 +93,23 @@ body {
 
 .bg-radial-fade {
   background: radial-gradient(60% 60% at 50% 0%, rgba(255, 106, 57, 0.16), transparent 70%);
+}
+
+.bg-hero-mesh {
+  background-image: url("/backgrounds/hero-mesh.jpg");
+  background-size: cover;
+  background-position: center 30%;
+}
+
+.text-gradient {
+  background: linear-gradient(90deg, var(--accent-2), var(--accent-pink) 55%, var(--accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.btn-gradient {
+  background: linear-gradient(90deg, var(--accent-pink), var(--accent));
 }
 
 .text-balance {

@@ -1,24 +1,28 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
+import { STEPS } from "@/lib/projects";
+
+const TECH_STACK = ["Claude", "Google Veo", "HeyGen"];
 
 export default function Hero() {
   return (
-    <section className="relative overflow-hidden border-b border-border bg-grid">
-      <div className="pointer-events-none absolute inset-0 bg-radial-fade" />
+    <section className="bg-hero-mesh relative overflow-hidden border-b border-border">
+      <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-bg/40 via-bg/70 to-bg" />
+      <div className="pointer-events-none absolute inset-0 opacity-50 bg-grid" />
 
       <div className="relative mx-auto grid max-w-[96rem] items-center gap-10 px-6 py-12 md:min-h-[calc(100dvh-4rem)] md:grid-cols-2 md:gap-20 md:px-12 md:py-10 lg:gap-28 lg:px-20 xl:px-28">
         <Reveal>
-          <p className="inline-flex items-center gap-2 rounded-full border border-border-strong bg-surface px-3 py-1 text-xs text-fg-muted">
-            <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-            Now rendering UGC &amp; cinematic ads
+          <p className="inline-flex items-center gap-2 rounded-full border border-border-strong bg-surface/80 px-3 py-1 text-xs uppercase tracking-wide text-fg-muted backdrop-blur">
+            <span className="h-1.5 w-1.5 rounded-full bg-accent-pink" />
+            AI ad production for bold brands
           </p>
 
           <h1 className="text-balance mt-5 font-display text-4xl leading-[1.05] tracking-tight md:text-5xl lg:text-6xl">
-            Your product.
+            Turn your product into
             <br />
-            A full ad campaign.
+            <span className="text-gradient">scroll-stopping ads.</span>
             <br />
-            <span className="italic text-accent">By tomorrow morning.</span>
+            Instantly.
           </h1>
 
           <p className="text-balance mt-5 max-w-md text-base text-fg-muted md:text-lg">
@@ -30,13 +34,13 @@ export default function Hero() {
           <div className="mt-7 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/signup"
-              className="rounded-full bg-accent px-6 py-3 text-center text-sm font-medium text-accent-fg transition-transform hover:scale-[1.03]"
+              className="btn-gradient rounded-full px-6 py-3 text-center text-sm font-medium text-white transition-transform hover:scale-[1.03]"
             >
               Start creating — free
             </Link>
             <Link
               href="/how-it-works"
-              className="rounded-full border border-border-strong px-6 py-3 text-center text-sm font-medium text-fg transition-colors hover:bg-surface"
+              className="rounded-full border border-border-strong bg-surface/60 px-6 py-3 text-center text-sm font-medium text-fg backdrop-blur transition-colors hover:bg-surface"
             >
               See how it works
             </Link>
@@ -45,88 +49,99 @@ export default function Hero() {
           <p className="mt-5 text-xs text-fg-subtle">
             No credit card required · Cancel anytime
           </p>
+
+          <div className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border pt-6">
+            <span className="text-xs text-fg-subtle">Built on</span>
+            {TECH_STACK.map((name) => (
+              <span key={name} className="text-sm font-medium text-fg-muted">
+                {name}
+              </span>
+            ))}
+          </div>
         </Reveal>
 
         <Reveal delay={150}>
-          <TransformCard />
+          <WorkflowPanel />
         </Reveal>
       </div>
     </section>
   );
 }
 
-function TransformCard() {
+function WorkflowPanel() {
+  const sidebarSteps = STEPS.slice(0, 5);
+
   return (
-    <div className="relative mx-auto w-full max-w-[19rem] md:max-w-[17rem] lg:max-w-[19rem]">
-      <div className="absolute -inset-6 -z-10 rounded-[32px] bg-gradient-to-br from-accent/20 via-transparent to-accent-2/20 blur-2xl" />
+    <div className="relative mx-auto w-full max-w-xl">
+      <div className="absolute -inset-8 -z-10 rounded-[40px] bg-gradient-to-br from-accent-2/25 via-accent-pink/15 to-accent/20 blur-3xl" />
 
-      <div className="rounded-2xl border border-border bg-surface p-3.5 shadow-2xl shadow-black/40 md:p-3.5">
-        <div className="flex items-center justify-between text-xs text-fg-subtle">
-          <span>Product photo</span>
-          <span>Input</span>
-        </div>
-        <div className="mt-2.5 flex h-16 items-center justify-center rounded-xl border border-dashed border-border-strong bg-bg-elevated md:h-14">
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 24 24"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M9 4h6l1.5 2H20a1 1 0 0 1 1 1v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h3.5L9 4Z"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              className="text-fg-subtle"
-            />
-            <circle
-              cx="12"
-              cy="13"
-              r="3.4"
-              stroke="currentColor"
-              strokeWidth="1.4"
-              className="text-fg-subtle"
-            />
-          </svg>
-        </div>
-
-        <div className="my-3 flex items-center gap-3">
-          <div className="h-px flex-1 bg-border" />
-          <span className="text-[10px] uppercase tracking-widest text-accent">
-            Backlot AI
+      <div className="overflow-hidden rounded-2xl border border-border bg-surface/90 shadow-2xl shadow-black/50 backdrop-blur">
+        <div className="flex items-center gap-2 border-b border-border bg-bg-elevated/80 px-4 py-3">
+          <span className="h-2.5 w-2.5 rounded-full bg-fg-subtle/30" />
+          <span className="h-2.5 w-2.5 rounded-full bg-fg-subtle/30" />
+          <span className="h-2.5 w-2.5 rounded-full bg-fg-subtle/30" />
+          <span className="ml-3 rounded-full bg-surface-2 px-3 py-1 text-[11px] text-fg-subtle">
+            backlot.ai/dashboard
           </span>
-          <div className="h-px flex-1 bg-border" />
         </div>
 
-        <div className="flex items-center justify-between text-xs text-fg-subtle">
-          <span>Rendered ad</span>
-          <span>Output</span>
-        </div>
-        <div className="relative mt-2.5 aspect-[9/10] overflow-hidden rounded-xl bg-gradient-to-b from-[#2a2118] via-[#181214] to-[#0c0b0d] md:aspect-[9/11]">
-          <div className="absolute inset-0 opacity-40 bg-grid" />
-          <div className="absolute left-3 right-3 top-3 flex items-center justify-between">
-            <span className="rounded-full bg-black/40 px-2 py-0.5 text-[10px] text-white/80">
-              REC
-            </span>
-            <span className="rounded-full bg-black/40 px-2 py-0.5 text-[10px] text-white/80">
-              0:14
-            </span>
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 backdrop-blur md:h-12 md:w-12">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="white">
-                <path d="M8 5v14l11-7L8 5Z" />
-              </svg>
+        <div className="grid grid-cols-[auto_1fr] gap-0">
+          <nav className="hidden flex-col gap-1 border-r border-border bg-bg-elevated/60 p-3 sm:flex">
+            {sidebarSteps.map((step, i) => (
+              <span
+                key={step.key}
+                className={`flex items-center gap-2 rounded-lg px-2.5 py-2 text-[11px] ${
+                  i === 2
+                    ? "bg-accent-pink/15 text-fg"
+                    : "text-fg-subtle"
+                }`}
+              >
+                <span
+                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[9px] ${
+                    i === 2 ? "bg-accent-pink text-white" : "border border-border-strong"
+                  }`}
+                >
+                  {i + 1}
+                </span>
+                {step.label}
+              </span>
+            ))}
+          </nav>
+
+          <div className="space-y-3 p-4">
+            <div className="rounded-xl border border-border bg-bg-elevated p-3">
+              <p className="text-[11px] text-fg-subtle">Concept</p>
+              <div className="mt-2 space-y-1.5">
+                <div className="h-2 w-3/4 rounded-full bg-surface-2" />
+                <div className="h-2 w-full rounded-full bg-surface-2" />
+                <div className="h-2 w-2/3 rounded-full bg-surface-2" />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <OutputThumb gradient="from-accent-2/50 via-surface-2 to-bg-elevated" duration="0:12" />
+              <OutputThumb gradient="from-accent-pink/45 via-surface-2 to-bg-elevated" duration="0:08" />
             </div>
           </div>
-          <div className="absolute inset-x-3 bottom-3 rounded-lg bg-black/50 p-2 backdrop-blur">
-            <p className="text-[11px] leading-snug text-white">
-              &ldquo;Here&rsquo;s why this one&rsquo;s different
-              &mdash;&rdquo;
-            </p>
-            <div className="mt-1.5 h-1 w-3/4 rounded-full bg-white/25" />
-          </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function OutputThumb({ gradient, duration }: { gradient: string; duration: string }) {
+  return (
+    <div className={`relative aspect-[9/13] overflow-hidden rounded-lg bg-gradient-to-b ${gradient}`}>
+      <div className="absolute inset-0 opacity-30 bg-grid" />
+      <span className="absolute right-1.5 top-1.5 rounded-full bg-black/40 px-1.5 py-0.5 text-[9px] text-white/80">
+        {duration}
+      </span>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 backdrop-blur">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="white" aria-hidden>
+            <path d="M8 5v14l11-7L8 5Z" />
+          </svg>
+        </span>
       </div>
     </div>
   );

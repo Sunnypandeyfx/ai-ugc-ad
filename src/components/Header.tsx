@@ -94,7 +94,7 @@ export default function Header() {
               </Link>
               <Link
                 href="/signup"
-                className="rounded-full bg-fg px-4 py-2 text-sm font-medium text-bg transition-colors hover:bg-white"
+                className="btn-gradient rounded-full px-4 py-2 text-sm font-medium text-white transition-transform hover:scale-[1.03]"
               >
                 Start free
               </Link>
@@ -154,7 +154,7 @@ export default function Header() {
                   </Link>
                   <Link
                     href="/signup"
-                    className="rounded-full bg-fg px-4 py-2 text-center text-sm font-medium text-bg"
+                    className="btn-gradient rounded-full px-4 py-2 text-center text-sm font-medium text-white"
                   >
                     Start free
                   </Link>

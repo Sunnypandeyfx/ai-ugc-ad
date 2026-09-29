@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PROJECT_STATUSES, STEPS, stepIndex } from "@/lib/projects";
 import CreateProjectButton from "./CreateProjectButton";
+import DeleteEntryButton from "./DeleteEntryButton";
+import { deleteGeneration, deleteProject } from "./actions";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -119,12 +121,12 @@ export default async function DashboardPage() {
                 {group.items.map((p) => {
                   const idx = stepIndex(p.current_step);
                   return (
-                    <li key={p.id}>
+                    <li key={p.id} className="group relative">
                       <Link
                         href={`/dashboard/projects/${p.id}`}
                         className="block h-full rounded-2xl border border-border bg-surface p-5 transition-colors hover:border-border-strong"
                       >
-                        <p className="truncate font-medium">{p.title}</p>
+                        <p className="truncate pr-6 font-medium">{p.title}</p>
                         <p className="mt-1 text-xs text-fg-subtle">
                           Step {idx + 1} of {STEPS.length} · {STEPS[idx].label} ·{" "}
                           {p.aspect_ratio}
@@ -139,6 +141,11 @@ export default async function DashboardPage() {
                           Updated {timeAgo(p.updated_at)}
                         </p>
                       </Link>
+                      <DeleteEntryButton
+                        label={`Delete ${p.title}`}
+                        confirmMessage={`Delete "${p.title}"? This can't be undone.`}
+                        action={deleteProject.bind(null, p.id)}
+                      />
                     </li>
                   );
                 })}
@@ -153,10 +160,10 @@ export default async function DashboardPage() {
           <h2 className="text-sm font-medium text-fg-muted">Earlier ads</h2>
           <ul className="mt-3 divide-y divide-border border-t border-border">
             {generations.map((g) => (
-              <li key={g.id}>
+              <li key={g.id} className="group relative">
                 <Link
                   href={`/dashboard/${g.id}`}
-                  className="flex items-center justify-between gap-4 py-4 transition-colors hover:opacity-80"
+                  className="flex items-center justify-between gap-4 py-4 pr-9 transition-colors hover:opacity-80"
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">
@@ -172,6 +179,12 @@ export default async function DashboardPage() {
                     {VIDEO_STATUS[g.video_status] ?? LEGACY_STATUS[g.status] ?? g.status}
                   </span>
                 </Link>
+                <DeleteEntryButton
+                  label="Delete this ad"
+                  confirmMessage="Delete this ad? This can't be undone."
+                  action={deleteGeneration.bind(null, g.id)}
+                  position="center-right"
+                />
               </li>
             ))}
           </ul>

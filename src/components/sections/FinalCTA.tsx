@@ -20,12 +20,12 @@ export default function FinalCTA() {
             >
               Start creating — free
             </Link>
-            <a
-              href="#pricing"
+            <Link
+              href="/pricing"
               className="rounded-full border border-border-strong px-6 py-3 text-sm font-medium text-fg transition-colors hover:bg-surface"
             >
               View pricing
-            </a>
+            </Link>
           </div>
         </Reveal>
       </div>

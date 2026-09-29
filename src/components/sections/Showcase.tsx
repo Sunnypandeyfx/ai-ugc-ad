@@ -27,9 +27,9 @@ export default function Showcase() {
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
           <p className="text-sm font-medium text-accent">Examples</p>
-          <h2 className="text-balance mt-3 max-w-xl font-display text-4xl leading-tight tracking-tight md:text-5xl">
+          <h1 className="text-balance mt-3 max-w-xl font-display text-4xl leading-tight tracking-tight md:text-5xl">
             Two formats. One upload.
-          </h2>
+          </h1>
           <p className="mt-4 max-w-lg text-fg-muted">
             Illustrative output styles — your dashboard renders real cuts
             from your own product photos once you connect a plan.

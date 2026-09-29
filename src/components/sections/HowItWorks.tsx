@@ -29,9 +29,9 @@ export default function HowItWorks() {
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
           <p className="text-sm font-medium text-accent">How it works</p>
-          <h2 className="text-balance mt-3 max-w-xl font-display text-4xl leading-tight tracking-tight md:text-5xl">
+          <h1 className="text-balance mt-3 max-w-xl font-display text-4xl leading-tight tracking-tight md:text-5xl">
             From product shot to finished ad, in four steps.
-          </h2>
+          </h1>
         </Reveal>
 
         <div className="mt-16 grid gap-px overflow-hidden rounded-2xl border border-border bg-border md:grid-cols-4">

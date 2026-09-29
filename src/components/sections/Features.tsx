@@ -33,9 +33,9 @@ export default function Features() {
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
           <p className="text-sm font-medium text-accent">Product</p>
-          <h2 className="text-balance mt-3 max-w-xl font-display text-4xl leading-tight tracking-tight md:text-5xl">
+          <h1 className="text-balance mt-3 max-w-xl font-display text-4xl leading-tight tracking-tight md:text-5xl">
             Everything an ad team needs, minus the ad team.
-          </h2>
+          </h1>
         </Reveal>
 
         <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

@@ -33,9 +33,9 @@ export default function FAQ() {
       <div className="mx-auto max-w-3xl px-6">
         <Reveal>
           <p className="text-center text-sm font-medium text-accent">FAQ</p>
-          <h2 className="text-balance mx-auto mt-3 text-center font-display text-4xl leading-tight tracking-tight md:text-5xl">
+          <h1 className="text-balance mx-auto mt-3 text-center font-display text-4xl leading-tight tracking-tight md:text-5xl">
             Questions, answered.
-          </h2>
+          </h1>
         </Reveal>
 
         <div className="mt-14 divide-y divide-border border-t border-border">

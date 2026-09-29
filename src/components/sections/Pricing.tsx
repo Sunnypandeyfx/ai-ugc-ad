@@ -52,9 +52,9 @@ export default function Pricing() {
       <div className="mx-auto max-w-6xl px-6">
         <Reveal className="text-center">
           <p className="text-sm font-medium text-accent">Pricing</p>
-          <h2 className="text-balance mx-auto mt-3 max-w-xl font-display text-4xl leading-tight tracking-tight md:text-5xl">
+          <h1 className="text-balance mx-auto mt-3 max-w-xl font-display text-4xl leading-tight tracking-tight md:text-5xl">
             Simple plans. Cancel anytime.
-          </h2>
+          </h1>
           <p className="mx-auto mt-4 max-w-md text-fg-muted">
             Every plan includes unlimited script drafts — you only spend
             credits when you render a final ad.

@@ -34,12 +34,12 @@ export default function Hero() {
             >
               Start creating — free
             </Link>
-            <a
-              href="#how-it-works"
+            <Link
+              href="/how-it-works"
               className="rounded-full border border-border-strong px-6 py-3 text-center text-sm font-medium text-fg transition-colors hover:bg-surface"
             >
               See how it works
-            </a>
+            </Link>
           </div>
 
           <p className="mt-6 text-xs text-fg-subtle">

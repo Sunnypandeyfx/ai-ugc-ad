@@ -7,11 +7,11 @@ import { createClient } from "@/lib/supabase/client";
 import { siteConfig } from "@/lib/seo";
 
 const NAV_LINKS = [
-  { href: "#how-it-works", label: "How it works" },
-  { href: "#features", label: "Product" },
-  { href: "#examples", label: "Examples" },
-  { href: "#pricing", label: "Pricing" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/how-it-works", label: "How it works" },
+  { href: "/product", label: "Product" },
+  { href: "/examples", label: "Examples" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/faq", label: "FAQ" },
 ];
 
 export default function Header() {
@@ -57,13 +57,13 @@ export default function Header() {
 
         <nav className="hidden items-center gap-8 md:flex">
           {NAV_LINKS.map((link) => (
-            <a
+            <Link
               key={link.href}
               href={link.href}
               className="text-sm text-fg-muted transition-colors hover:text-fg"
             >
               {link.label}
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -124,14 +124,14 @@ export default function Header() {
         <div className="border-t border-border bg-bg px-6 py-4 md:hidden">
           <nav className="flex flex-col gap-4">
             {NAV_LINKS.map((link) => (
-              <a
+              <Link
                 key={link.href}
                 href={link.href}
                 onClick={() => setOpen(false)}
                 className="text-sm text-fg-muted hover:text-fg"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
             <div className="mt-2 flex flex-col gap-3 border-t border-border pt-4">
               {userEmail ? (

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
-import AbstractArt from "@/components/AbstractArt";
+import { CampaignArt } from "@/components/CampaignArt";
 
 const STYLES = [
   { name: "Cinematic", blurb: "Emotive and premium" },
@@ -36,7 +36,11 @@ export default function StyleGallery() {
           {STYLES.map((style, i) => (
             <Reveal key={style.name} delay={i * 60}>
               <figure>
-                <AbstractArt index={i} className="aspect-[3/4]" />
+                <CampaignArt
+                  index={i}
+                  label={`Illustrative ${style.name} style direction`}
+                  className="aspect-[3/4] rounded-lg"
+                />
                 <figcaption className="mt-2.5">
                   <p className="text-sm font-medium">{style.name}</p>
                   <p className="text-xs text-fg-subtle">{style.blurb}</p>

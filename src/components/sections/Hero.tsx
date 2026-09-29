@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Reveal from "@/components/Reveal";
+import { CampaignArt } from "@/components/CampaignArt";
 import { STEPS } from "@/lib/projects";
 
 const TECH_STACK = ["Claude", "Google Veo", "HeyGen"];
@@ -119,8 +120,8 @@ function WorkflowPanel() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <OutputThumb gradient="from-accent-2/50 via-surface-2 to-bg-elevated" duration="0:12" />
-              <OutputThumb gradient="from-accent-pink/45 via-surface-2 to-bg-elevated" duration="0:08" />
+              <OutputThumb index={0} duration="0:12" />
+              <OutputThumb index={4} duration="0:08" />
             </div>
           </div>
         </div>
@@ -129,10 +130,10 @@ function WorkflowPanel() {
   );
 }
 
-function OutputThumb({ gradient, duration }: { gradient: string; duration: string }) {
+function OutputThumb({ index, duration }: { index: number; duration: string }) {
   return (
-    <div className={`relative aspect-[9/13] overflow-hidden rounded-lg bg-gradient-to-b ${gradient}`}>
-      <div className="absolute inset-0 opacity-30 bg-grid" />
+    <div className="relative aspect-[9/13] overflow-hidden rounded-lg">
+      <CampaignArt index={index} label="Illustrative rendered ad output" className="absolute inset-0" />
       <span className="absolute right-1.5 top-1.5 rounded-full bg-black/40 px-1.5 py-0.5 text-[9px] text-white/80">
         {duration}
       </span>

@@ -1,5 +1,5 @@
 import Reveal from "@/components/Reveal";
-import AbstractArt from "@/components/AbstractArt";
+import { CampaignArt } from "@/components/CampaignArt";
 import { STEPS } from "@/lib/projects";
 
 export default function WorkflowFlow() {
@@ -24,7 +24,11 @@ export default function WorkflowFlow() {
                   <h3 className="text-sm font-medium">{step.label}</h3>
                 </div>
                 <p className="mt-2 text-xs leading-relaxed text-fg-muted">{step.blurb}</p>
-                <AbstractArt index={i} className="mt-3 aspect-[4/3]" />
+                <CampaignArt
+                  index={i}
+                  label={`Illustrative creative direction for the ${step.label} step`}
+                  className="mt-3 aspect-[4/3] rounded-lg"
+                />
               </div>
             </Reveal>
           ))}

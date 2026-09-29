@@ -1,5 +1,5 @@
 import Reveal from "@/components/Reveal";
-import AbstractArt from "@/components/AbstractArt";
+import { ComparisonArt } from "@/components/CampaignArt";
 
 const OLD_WAY = [
   "Coordinating a full production",
@@ -21,7 +21,8 @@ export default function Comparison() {
       <div className="mx-auto grid max-w-6xl gap-6 px-6 lg:grid-cols-2">
         <Reveal>
           <div className="relative h-full overflow-hidden rounded-2xl border border-border bg-surface p-7">
-            <AbstractArt index={2} className="absolute inset-0 opacity-20" />
+            <ComparisonArt side="old" className="absolute inset-0 opacity-35 grayscale" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/70 to-surface/20" />
             <div className="relative">
               <span className="inline-block rounded-full border border-border-strong bg-bg/60 px-3 py-1 text-xs text-fg-muted backdrop-blur">
                 The old way
@@ -43,7 +44,8 @@ export default function Comparison() {
 
         <Reveal delay={100}>
           <div className="relative h-full overflow-hidden rounded-2xl border border-accent-pink/30 bg-surface p-7">
-            <AbstractArt index={1} className="absolute inset-0 opacity-25" />
+            <ComparisonArt side="new" className="absolute inset-0 opacity-40" />
+            <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/70 to-surface/20" />
             <div className="relative">
               <span className="btn-gradient inline-block rounded-full px-3 py-1 text-xs font-medium text-white">
                 The Backlot way

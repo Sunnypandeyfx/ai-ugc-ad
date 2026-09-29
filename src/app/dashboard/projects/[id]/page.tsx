@@ -8,6 +8,7 @@ import ProductStep from "./_product/ProductStep";
 import BriefStep from "./_brief/BriefStep";
 import ConceptStep from "./_concept/ConceptStep";
 import StoryboardStep from "./_storyboard/StoryboardStep";
+import ShotsStep from "./_shots/ShotsStep";
 import AgentPanel from "./_agent/AgentPanel";
 
 export const metadata: Metadata = { title: "Project" };
@@ -140,6 +141,8 @@ export default async function ProjectWorkspacePage({
             <ConceptStep projectId={project.id} />
           ) : viewStep.key === "storyboard" ? (
             <StoryboardStep projectId={project.id} />
+          ) : viewStep.key === "shots" ? (
+            <ShotsStep projectId={project.id} userId={user.id} />
           ) : (
             <StepBody step={viewStep.key} />
           )}
@@ -183,8 +186,8 @@ function StepBody({ step }: { step: StepKey }) {
     <div className="mt-8 rounded-xl border border-dashed border-border-strong p-6">
       <p className="text-sm text-fg">Not available yet</p>
       <p className="mt-1 text-sm text-fg-muted">
-        {step === "shots"
-          ? "Your storyboard is approved and saved. Shot-by-shot generation arrives in the next update — you'll see the credit cost of each shot and confirm before anything is generated."
+        {step === "final"
+          ? "Your generated shots are saved. Arranging them, adding captions, logo and music arrives in a later update."
           : "This step unlocks once the earlier steps are built and completed."}
       </p>
     </div>
